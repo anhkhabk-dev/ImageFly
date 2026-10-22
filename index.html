@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ImageFly: ảnh có sẵn thành video</title>
+<meta name="description" content="Công cụ dòng lệnh cho Claude Code và Antigravity: biến thư mục ảnh thành video 9:16 hoặc 16:9 với hiệu ứng máy quay, chuyển cảnh, nhạc, lời đọc tiếng Việt tùy chọn." />
+<meta property="og:title" content="ImageFly: ảnh có sẵn thành video" />
+<meta property="og:description" content="Đưa thư mục ảnh, nhận video có hiệu ứng, chuyển cảnh, nhạc nền, tiêu đề động và lời đọc tiếng Việt tùy chọn." />
+<meta property="og:image" content="site/media/demo-slideshow-16x9.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0b0e14; --bg2: #11151e; --card: #151a25; --line: rgba(255,255,255,.08);
+  --ink: #f1f3f8; --ink2: #aab2c3; --ink3: #6d7790;
+  --amber: #ffc857; --teal: #3fd0c9; --rose: #ff6b8b;
+  --r: 18px; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Be Vietnam Pro", system-ui, sans-serif; line-height: 1.6; overflow-x: hidden; }
+a { color: inherit; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 640px) { .wrap { padding: 0 16px; } }
+code { font-family: var(--mono); font-size: .9em; background: rgba(255,255,255,.07); padding: 2px 7px; border-radius: 6px; color: var(--ink); }
+
+nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); background: rgba(11,14,20,.75); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+.logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 22px; text-decoration: none; }
+.logo svg { width: 34px; height: 34px; }
+.nav-links { display: flex; gap: 26px; align-items: center; }
+.nav-links a { text-decoration: none; color: var(--ink2); font-size: 15px; font-weight: 500; }
+.nav-links a:hover { color: var(--ink); }
+.btn-gh { display: inline-flex; gap: 8px; align-items: center; padding: 9px 18px; border-radius: 999px; background: var(--ink); color: var(--bg) !important; font-weight: 700; }
+@media (max-width: 820px) { .nav-links a:not(.btn-gh) { display: none; } }
+
+.hero { padding: 70px 0 30px; position: relative; overflow-x: clip; }
+.hero::before { content: ""; position: absolute; inset: -220px 0 auto; height: 700px; background: radial-gradient(closest-side, rgba(255,200,87,.15), transparent 70%); pointer-events: none; }
+.hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 52px; align-items: center; position: relative; }
+@media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
+.eyebrow { font-family: var(--mono); color: var(--teal); letter-spacing: .14em; font-size: 13px; text-transform: uppercase; margin: 0 0 18px; }
+h1 { font-size: clamp(44px, 7.4vw, 88px); line-height: 1.04; margin: 0 0 24px; font-weight: 800; letter-spacing: -.03em; }
+h1 .mark { color: var(--amber); }
+.lead { font-size: 19px; color: var(--ink2); max-width: 600px; margin: 0 0 30px; }
+.cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 15px 26px; border-radius: 14px; font-weight: 700; text-decoration: none; font-size: 16px; border: 0; cursor: pointer; font-family: inherit; }
+.btn-primary { background: var(--amber); color: #0b0e14; box-shadow: 0 10px 30px rgba(255,200,87,.22); }
+.btn-primary:hover { transform: translateY(-2px); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,.18); }
+.btn-ghost:hover { background: rgba(255,255,255,.06); }
+.pills { display: flex; flex-wrap: wrap; gap: 10px 22px; color: var(--ink2); font-size: 15px; }
+.pills span::before { content: "✓"; color: var(--teal); font-weight: 800; margin-right: 8px; }
+
+.demo { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.screen { width: 100%; max-width: 520px; border-radius: 18px; padding: 8px; background: linear-gradient(160deg, #27304a, #0d1220); box-shadow: 0 40px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.12); }
+.screen.portrait { width: min(300px, 76vw); border-radius: 34px; padding: 9px; }
+.screen video { width: 100%; display: block; border-radius: 12px; background: #000; }
+.screen.portrait video { border-radius: 26px; aspect-ratio: 9/16; object-fit: cover; }
+.tabs { display: flex; gap: 8px; background: var(--bg2); border: 1px solid var(--line); padding: 5px; border-radius: 999px; }
+.tabs button { border: 0; background: transparent; color: var(--ink2); padding: 8px 16px; border-radius: 999px; font: 600 14px "Be Vietnam Pro", sans-serif; cursor: pointer; }
+.tabs button.on { background: var(--ink); color: var(--bg); }
+.demo-note { font-size: 13px; color: var(--ink3); text-align: center; max-width: 420px; margin: 0; }
+
+section { padding: 88px 0; }
+.kicker { font-family: var(--mono); color: var(--teal); letter-spacing: .14em; font-size: 13px; text-transform: uppercase; margin: 0 0 14px; }
+h2 { font-size: clamp(32px, 4.6vw, 50px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -.02em; font-weight: 800; }
+.sub { color: var(--ink2); font-size: 18px; max-width: 740px; margin: 0 0 44px; }
+h3 { margin: 0 0 8px; font-size: 19px; }
+
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 800px) { .modes { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 26px; }
+.card p { margin: 0 0 12px; color: var(--ink2); font-size: 15px; }
+.card ul { margin: 0; padding-left: 18px; color: var(--ink2); font-size: 15px; }
+.card .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: rgba(63,208,201,.14); color: var(--teal); margin-bottom: 12px; font-family: var(--mono); }
+
+.pipe { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .pipe { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .pipe { grid-template-columns: 1fr; } }
+.step { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 20px 18px; transition: transform .3s, border-color .3s; }
+.step:hover { transform: translateY(-4px); border-color: rgba(255,200,87,.4); }
+.step .n { font-family: var(--mono); font-size: 13px; color: var(--ink3); }
+.step h3 { font-size: 17px; margin: 8px 0 6px; }
+.step p { margin: 0 0 10px; color: var(--ink2); font-size: 14px; line-height: 1.5; }
+.step .file { font-family: var(--mono); font-size: 12px; color: var(--amber); }
+.note { color: var(--ink3); font-size: 14px; margin-top: 16px; }
+
+.fx-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+@media (max-width: 1000px) { .fx-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .fx-grid { grid-template-columns: repeat(2, 1fr); } }
+.fx { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.fx .vp { aspect-ratio: 16/10; overflow: hidden; background: #0a0d13; position: relative; }
+.fx .pic { position: absolute; inset: 0; background:
+  radial-gradient(circle at 76% 28%, #ffe29a 0 7%, transparent 7.5%),
+  linear-gradient(to bottom, #6fb4ff 0 55%, #3c8a5a 55% 100%);
+  animation-duration: 3.2s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+.fx .pic::after { content: ""; position: absolute; left: 12%; bottom: 36%; width: 22%; height: 22%; background: #2b3a55; border-radius: 4px 4px 0 0; box-shadow: 70px 12px 0 -4px #c9573e; }
+.a-zin { animation-name: zin; } .a-zout { animation-name: zout; } .a-pl { animation-name: pl; } .a-pr { animation-name: pr; }
+.a-pu { animation-name: pu; } .a-pd { animation-name: pd; } .a-dr { animation-name: dr; } .a-pf { animation-name: pf; transform-origin: 76% 28%; }
+@keyframes zin { from { transform: scale(1); } to { transform: scale(1.18); } }
+@keyframes zout { from { transform: scale(1.18); } to { transform: scale(1); } }
+@keyframes pl { from { transform: scale(1.16) translateX(4.5%); } to { transform: scale(1.16) translateX(-4.5%); } }
+@keyframes pr { from { transform: scale(1.16) translateX(-4.5%); } to { transform: scale(1.16) translateX(4.5%); } }
+@keyframes pu { from { transform: scale(1.16) translateY(4.5%); } to { transform: scale(1.16) translateY(-4.5%); } }
+@keyframes pd { from { transform: scale(1.16) translateY(-4.5%); } to { transform: scale(1.16) translateY(4.5%); } }
+@keyframes dr { from { transform: scale(1.08) translate(-2%, 2%); } to { transform: scale(1.17) translate(2%, -2%); } }
+@keyframes pf { from { transform: scale(1); } to { transform: scale(1.3); } }
+.fx .cap { padding: 12px 14px 14px; }
+.fx .cap b { display: block; font-size: 15px; }
+.fx .cap code { font-size: 11px; }
+
+.tr-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 28px; }
+@media (max-width: 1000px) { .tr-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .tr-grid { grid-template-columns: repeat(2, 1fr); } }
+.tr { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+.tr .vp { aspect-ratio: 16/10; border-radius: 10px; overflow: hidden; position: relative; background: #3c8a5a; }
+.tr .vp i { position: absolute; inset: 0; background: linear-gradient(135deg, #6fb4ff, #c98cff); animation-duration: 2.4s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.t-fade i { animation-name: tfade; } .t-slide i { animation-name: tslide; } .t-up i { animation-name: tup; }
+.t-zoom i { animation-name: tzoom; } .t-wipe i { animation-name: twipe; }
+@keyframes tfade { 0%, 15% { opacity: 0; } 60%, 100% { opacity: 1; } }
+@keyframes tslide { 0%, 15% { transform: translateX(100%); } 60%, 100% { transform: none; } }
+@keyframes tup { 0%, 15% { transform: translateY(100%); } 60%, 100% { transform: none; } }
+@keyframes tzoom { 0%, 15% { transform: scale(1.4); opacity: 0; } 60%, 100% { transform: none; opacity: 1; } }
+@keyframes twipe { 0%, 15% { clip-path: inset(0 100% 0 0); } 60%, 100% { clip-path: inset(0); } }
+.tr b { display: block; margin: 10px 0 2px; font-size: 15px; }
+.tr span { color: var(--ink3); font-size: 12px; font-family: var(--mono); }
+
+.looks { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.look { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px 8px 10px; font-size: 14px; }
+.look i { width: 26px; height: 26px; border-radius: 50%; display: block; }
+
+.feats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 900px) { .feats { grid-template-columns: 1fr; } }
+.feat { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 26px; }
+.feat .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,200,87,.12); font-size: 22px; margin-bottom: 14px; }
+.feat p { margin: 0 0 8px; color: var(--ink2); font-size: 15px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink3); font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+td { color: var(--ink2); }
+td:first-child { color: var(--ink); white-space: nowrap; }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+.warn { margin-top: 18px; padding: 16px 20px; border-radius: 14px; border: 1px solid rgba(255,107,139,.4); background: rgba(255,107,139,.07); color: var(--ink2); font-size: 15px; }
+.warn b { color: var(--rose); }
+
+.install { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+@media (max-width: 900px) { .install { grid-template-columns: 1fr; } }
+.code { background: #070a11; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 18px; }
+.code .bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); font: 600 13px var(--mono); color: var(--ink3); }
+.code .bar button { background: rgba(255,255,255,.08); border: 0; color: var(--ink); padding: 5px 12px; border-radius: 8px; font: 600 12px "Be Vietnam Pro", sans-serif; cursor: pointer; }
+.code pre { margin: 0; padding: 16px 20px; font: 14px/1.9 var(--mono); color: var(--ink); overflow-x: auto; }
+.code pre .c { color: var(--ink3); }
+.req { list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 12px; }
+.req li { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; color: var(--ink2); font-size: 15px; }
+.req li b { color: var(--ink); }
+
+.tree { background: #070a11; border: 1px solid var(--line); border-radius: var(--r); padding: 20px 24px; font: 14px/1.8 var(--mono); color: var(--ink2); overflow-x: auto; }
+.tree b { color: var(--amber); font-weight: 600; }
+
+.credits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 900px) { .credits { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .credits { grid-template-columns: 1fr; } }
+.cr { border: 1px solid var(--line); border-radius: 16px; padding: 18px; text-decoration: none; background: var(--bg2); transition: border-color .25s; }
+.cr:hover { border-color: rgba(255,200,87,.45); }
+.cr b { display: block; margin-bottom: 4px; }
+.cr span { color: var(--ink3); font-size: 13px; line-height: 1.45; display: block; }
+.cr em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--amber); }
+
+footer { border-top: 1px solid var(--line); padding: 34px 0 56px; color: var(--ink3); font-size: 14px; }
+footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
+.reveal.in { opacity: 1; transform: none; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 30px); opacity: 0; background: var(--amber); color: #0b0e14; font-weight: 700; padding: 12px 20px; border-radius: 12px; transition: .3s; z-index: 50; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="6" width="24" height="28" rx="6" fill="#ffc857"/><circle cx="12" cy="15" r="3" fill="#0b0e14"/><path d="M6 30 L14 22 L20 27 L26 19 L28 21 V30 Z" fill="#0b0e14"/><path d="M31 12 h6 M32 20 h6 M31 28 h6" stroke="#3fd0c9" stroke-width="3" stroke-linecap="round"/></svg>
+      ImageFly
+    </a>
+    <div class="nav-links">
+      <a href="#che-do">Hai chế độ</a>
+      <a href="#quy-trinh">Quy trình</a>
+      <a href="#hieu-ung">Hiệu ứng</a>
+      <a href="#nhac">Nhạc</a>
+      <a href="#cai-dat">Cài đặt</a>
+      <a class="btn-gh" href="https://github.com/anhkhabk-dev/ImageFly">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Mã nguồn mở cho Claude Code và Antigravity</p>
+      <h1>Ảnh của anh,<br /><span class="mark">thành video.</span></h1>
+      <p class="lead">Đưa một thư mục ảnh, gõ <code>/video-tu-anh</code>. ImageFly xoay và chuẩn hóa ảnh, quét máy quay, chuyển cảnh, đặt tiêu đề động, ghép nhạc và hiệu ứng âm thanh, tùy chọn thêm lời đọc tiếng Việt, rồi xuất MP4 khung 9:16 hoặc 16:9.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#cai-dat">Cài đặt ngay</a>
+        <a class="btn btn-ghost" href="#hieu-ung">Xem hiệu ứng</a>
+      </div>
+      <div class="pills">
+        <span>Miễn phí, giấy phép MIT</span>
+        <span>9:16 và 16:9</span>
+        <span>Slideshow hoặc có lời đọc</span>
+        <span>Chạy trên máy anh</span>
+      </div>
+    </div>
+    <div class="demo">
+      <div class="screen" id="screen"><video id="demo" src="site/media/demo-slideshow-16x9.mp4" poster="site/media/demo-slideshow-16x9.jpg" controls playsinline preload="metadata"></video></div>
+      <div class="tabs" role="tablist">
+        <button class="on" data-k="s" role="tab">Slideshow 16:9</button>
+        <button data-k="v" role="tab">Có lời đọc 9:16</button>
+      </div>
+      <p class="demo-note" id="demo-note">Slideshow 16:9 từ 7 ảnh: nhạc gốc soạn bằng code, hiệu ứng âm thanh ở các chỗ chuyển cảnh.</p>
+    </div>
+  </div>
+</header>
+
+<section id="che-do">
+  <div class="wrap">
+    <p class="kicker reveal">Hai chế độ</p>
+    <h2 class="reveal">Chọn theo cách anh muốn kể.</h2>
+    <p class="sub reveal">Cùng một bộ ảnh, hai kiểu video. Chế độ nào cũng dùng chung hiệu ứng, chuyển cảnh, tiêu đề và bộ trộn âm.</p>
+    <div class="modes">
+      <div class="card reveal">
+        <span class="tag">slideshow</span>
+        <h3>Chỉ ảnh, nhạc và hiệu ứng</h3>
+        <p>Mỗi ảnh dài theo nhịp nhạc, chuyển cảnh xoay vòng, không cần lời. Hợp video giới thiệu công trình, album, bản tin ảnh.</p>
+        <ul><li>Cắt ảnh trùng nhịp nhạc (tự đo BPM khi anh đưa file nhạc)</li><li>Chú thích từng ảnh, tiêu đề đầu video</li><li>Tổng thời lượng tự tính hoặc ép bằng <code>duration_s</code></li></ul>
+      </div>
+      <div class="card reveal">
+        <span class="tag">voiceover</span>
+        <h3>Có lời đọc tiếng Việt</h3>
+        <p>Viết lời cho từng cảnh, ImageFly đọc bằng giọng VieNeu, chấm phát âm bằng Whisper, và cho ảnh hiện đúng lúc từ khóa được đọc.</p>
+        <ul><li>25 giọng có sẵn, bảng phát âm cho từ tiếng Anh</li><li>Nhạc tự hạ xuống khi có giọng, hồi lại giữa các câu</li><li>Phụ đề in lên hình và xuất <code>.srt</code></li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quy-trinh" style="background: var(--bg2)">
+  <div class="wrap">
+    <p class="kicker reveal">Quy trình</p>
+    <h2 class="reveal">Từ thư mục ảnh đến MP4 trong một lệnh.</h2>
+    <p class="sub reveal">Mỗi bước ghi đúng một file, bước sau chỉ đọc file đó. Sửa file nào, chạy lại từ bước đó.</p>
+    <div class="pipe">
+      <div class="step reveal"><span class="n">01</span><h3>Nạp ảnh</h3><p>Xoay theo EXIF, giảm cỡ, tạo nền mờ. Ảnh gốc không bị sửa.</p><span class="file">images.json</span></div>
+      <div class="step reveal"><span class="n">02</span><h3>Lời đọc</h3><p>Chỉ chế độ voiceover: giọng VieNeu, chấm bằng Whisper.</p><span class="file">words.json</span></div>
+      <div class="step reveal"><span class="n">03</span><h3>Chia cảnh</h3><p>Chọn phủ kín hay đặt giữa nền mờ, hiệu ứng, chuyển cảnh, góc tiêu đề.</p><span class="file">shots.json</span></div>
+      <div class="step reveal"><span class="n">04</span><h3>Nhạc</h3><p>File của anh, nhạc soạn từ bản nhạc, hoặc nhạc tổng hợp.</p><span class="file">music/bgm.wav</span></div>
+      <div class="step reveal"><span class="n">05</span><h3>Trộn âm</h3><p>Hiệu ứng âm thanh, nhạc hạ khi có giọng, chuẩn -14 LUFS.</p><span class="file">mix.wav</span></div>
+      <div class="step reveal"><span class="n">06</span><h3>Dựng cảnh</h3><p>Sinh từng cảnh HTML từ shots.json, không cần agent phụ.</p><span class="file">compositions/</span></div>
+      <div class="step reveal"><span class="n">07</span><h3>Kiểm và render</h3><p>HyperFrames kiểm tra bố cục, tương phản, rồi render MP4.</p><span class="file">renders/*.mp4</span></div>
+    </div>
+    <p class="note reveal">Render mất khoảng 2 giây máy cho mỗi giây video. Máy không có card NVIDIA vẫn chạy.</p>
+  </div>
+</section>
+
+<section id="hieu-ung">
+  <div class="wrap">
+    <p class="kicker reveal">Hiệu ứng</p>
+    <h2 class="reveal">9 kiểu máy quay, 5 kiểu chuyển cảnh.</h2>
+    <p class="sub reveal">Mỗi ảnh tự được gán một hiệu ứng phù hợp với tỉ lệ ảnh (ảnh cao quét dọc, ảnh rộng quét ngang). Anh đổi riêng từng ảnh trong <code>images.json</code>; điểm nhấn <code>focus</code> cho zoom hướng đúng vào chủ thể.</p>
+    <div class="fx-grid">
+      <div class="fx reveal"><div class="vp"><div class="pic a-zin"></div></div><div class="cap"><b>Zoom vào</b><code>zoom-in</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-zout"></div></div><div class="cap"><b>Zoom ra</b><code>zoom-out</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-pf"></div></div><div class="cap"><b>Đẩy vào điểm nhấn</b><code>push-focus</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-pl"></div></div><div class="cap"><b>Quét trái</b><code>pan-left</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-pr"></div></div><div class="cap"><b>Quét phải</b><code>pan-right</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-pu"></div></div><div class="cap"><b>Quét lên</b><code>pan-up</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-pd"></div></div><div class="cap"><b>Quét xuống</b><code>pan-down</code></div></div>
+      <div class="fx reveal"><div class="vp"><div class="pic a-dr"></div></div><div class="cap"><b>Trôi nhẹ</b><code>drift</code></div></div>
+    </div>
+    <div class="tr-grid">
+      <div class="tr reveal t-fade"><div class="vp"><i></i></div><b>Mờ chồng</b><span>fade</span></div>
+      <div class="tr reveal t-slide"><div class="vp"><i></i></div><b>Trượt ngang</b><span>slide</span></div>
+      <div class="tr reveal t-up"><div class="vp"><i></i></div><b>Trượt lên</b><span>slideup</span></div>
+      <div class="tr reveal t-zoom"><div class="vp"><i></i></div><b>Zoom nổi</b><span>zoom</span></div>
+      <div class="tr reveal t-wipe"><div class="vp"><i></i></div><b>Quét mở</b><span>wipe</span></div>
+    </div>
+    <p class="note">Ảnh lệch tỉ lệ nhiều so với khung (ví dụ ảnh dọc trong video ngang) được đặt giữa trên nền mờ của chính nó, không bị cắt mất nội dung. Ảnh lệch ít thì phủ kín khung.</p>
+    <div class="looks reveal">
+      <span class="look"><i style="background:#cfd6e4"></i>natural</span>
+      <span class="look"><i style="background:linear-gradient(135deg,#ffc857,#ff7b54)"></i>warm</span>
+      <span class="look"><i style="background:linear-gradient(135deg,#7df9ff,#8ab4ff)"></i>cool</span>
+      <span class="look"><i style="background:linear-gradient(135deg,#f2b138,#3fd0c9)"></i>cinematic</span>
+      <span class="look"><i style="background:linear-gradient(135deg,#ffeb3b,#ff4081)"></i>vivid</span>
+      <span class="look"><i style="background:linear-gradient(135deg,#fff,#555)"></i>bw</span>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--bg2)">
+  <div class="wrap">
+    <p class="kicker reveal">Tiêu đề và phụ đề</p>
+    <h2 class="reveal">Chữ có việc để làm.</h2>
+    <div class="feats">
+      <div class="feat reveal"><div class="ic">Aa</div><h3>Tiêu đề in hoa</h3><p>Hiện to giữa khung lúc mở đầu, từng chữ bật lên, rồi thu nhỏ về một góc và ở yên. Góc tự chọn xa chủ thể trong ảnh để không che.</p><p>Chế độ <code>roam</code> đổi góc và màu theo thời gian.</p></div>
+      <div class="feat reveal"><div class="ic">💬</div><h3>Phụ đề đủ dấu</h3><p>Font Be Vietnam Pro, tối đa 34 ký tự mỗi dòng ở khung dọc, giữ tối thiểu 1,8 giây. Xuất kèm <code>phude.srt</code>.</p></div>
+      <div class="feat reveal"><div class="ic">▣</div><h3>Vùng an toàn</h3><p>Tiêu đề, chú thích và phụ đề tránh vùng đỉnh và đáy của khung dọc, nơi giao diện mạng xã hội hay che.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="nhac">
+  <div class="wrap">
+    <p class="kicker reveal">Nhạc và âm thanh</p>
+    <h2 class="reveal">Nhạc của anh, hoặc nhạc gốc theo giai điệu.</h2>
+    <p class="sub reveal">Khai báo một dòng <code>music</code> trong <code>brief.json</code>. Nhạc tự mờ vào, mờ ra và chuẩn hóa về -14 LUFS.</p>
+    <div class="tablewrap reveal">
+      <table>
+        <tr><th>Giá trị music</th><th>Nghĩa</th></tr>
+        <tr><td><code>"đường/dẫn/file.mp3"</code></td><td>Dùng file nhạc của anh. <code>music_start_s</code> chọn đoạn bắt đầu (ví dụ nhảy vào điệp khúc); tự đo nhịp để cắt ảnh trùng nhịp.</td></tr>
+        <tr><td><code>["a.mp3", "b.mp3"]</code></td><td>Nối nhiều bài, mờ chồng 2 giây.</td></tr>
+        <tr><td><code>"score"</code></td><td>Soạn từ <code>music/score.json</code>: giai điệu, hợp âm, nhịp, nhạc cụ (piano, sáo, chuông, pluck). Cùng bản nhạc ra cùng file.</td></tr>
+        <tr><td><code>"synth:calm | inspiring | upbeat | tech"</code></td><td>Nhạc tổng hợp bằng code theo tâm trạng.</td></tr>
+        <tr><td><code>"none"</code></td><td>Không nhạc.</td></tr>
+      </table>
+    </div>
+    <div class="feats" style="margin-top:24px">
+      <div class="feat reveal"><div class="ic">🎚</div><h3>Nhạc hạ khi có giọng</h3><p>Chế độ voiceover: nhạc tự xuống -14 dB so với giọng khi đang đọc, hồi lại -8 dB giữa các câu. Chỉnh bằng <code>music_db</code> và <code>duck_db</code>.</p></div>
+      <div class="feat reveal"><div class="ic">✦</div><h3>Hiệu ứng âm thanh</h3><p>Gió quét, swish, tiếng trầm, chuông, lấp lánh, tổng hợp bằng code và đặt đúng chỗ chuyển cảnh và tiêu đề. Không có file bên thứ ba.</p></div>
+      <div class="feat reveal"><div class="ic">📁</div><h3>Có file của anh thì chỉ dùng file đó</h3><p>Khi anh đưa file âm thanh, ImageFly bỏ nhạc tổng hợp và hiệu ứng âm thanh do agent tạo. Đặt <code>sfx: true</code> nếu muốn thêm lên trên.</p></div>
+    </div>
+    <div class="warn reveal"><b>Về bản quyền.</b> ImageFly không tái tạo giai điệu hay lời của bài hát thương mại. Hãy dùng file nhạc anh có quyền sử dụng, bản nhạc phạm vi công cộng, hoặc nhạc gốc soạn theo phong cách. Cắt đoạn ngắn hay thêm hiệu ứng âm thanh không làm nhạc có bản quyền thành an toàn khi đăng công khai.</div>
+  </div>
+</section>
+
+<section id="cai-dat" style="background: var(--bg2)">
+  <div class="wrap">
+    <p class="kicker reveal">Cài đặt</p>
+    <h2 class="reveal">Ba lệnh là chạy.</h2>
+    <p class="sub reveal">Cần có sẵn Node.js 22+, Python 3.10+ và ffmpeg trong PATH. Slideshow chỉ cần gói Python nhẹ; giọng đọc tải thêm khoảng 2 đến 3 GB.</p>
+    <div class="install">
+      <div class="reveal">
+        <div class="code"><div class="bar"><span>Claude Code</span><button data-copy="c1">Chép</button></div>
+<pre id="c1">/plugin marketplace add anhkhabk-dev/ImageFly
+/plugin install imagefly@imagefly
+/anh-cai-dat</pre></div>
+        <div class="code"><div class="bar"><span>Antigravity và agent khác</span><button data-copy="c2">Chép</button></div>
+<pre id="c2">git clone https://github.com/anhkhabk-dev/ImageFly
+cd ImageFly
+python tools/imagefly.py doctor
+<span class="c"># để agent đọc AGENTS.md, hoặc chép skills/ vào thư mục skills của agent</span></pre></div>
+        <div class="code"><div class="bar"><span>Dùng trực tiếp bằng dòng lệnh</span><button data-copy="c3">Chép</button></div>
+<pre id="c3">python tools/imagefly.py new can-gio --images "D:\Anh\CanGio" --aspect 16:9 --title "Dự án Cần Giờ"
+python tools/imagefly.py build videos/can-gio --name can-gio</pre></div>
+      </div>
+      <div class="reveal">
+        <ul class="req">
+          <li><b>Node.js 22+</b> chạy HyperFrames (dựng HTML thành MP4).</li>
+          <li><b>Python 3.10+</b> (nên có <b>uv</b>) cho công cụ nạp ảnh, nhạc, trộn âm.</li>
+          <li><b>ffmpeg</b> trong PATH, bản có <code>loudnorm</code> và <code>afade</code>.</li>
+          <li><b>Giọng đọc (tùy chọn):</b> <code>python tools/setup/doctor.py --install --voice</code>, chạy bằng CPU, không cần card NVIDIA.</li>
+        </ul>
+        <div class="tree"><b>skills/</b>  video-tu-anh (quy trình), anh-cai-dat
+<b>tools/</b>   imagefly.py (CLI), assemble.py, timeline.py
+         audio/ (mix.py, sfx.py)  music/ (synth.py, score.py)
+         voice/  setup/
+<b>templates/</b> font Be Vietnam Pro
+<b>vendor/</b>  code chép từ repo khác, giấy phép gốc
+<b>AGENTS.md</b> hướng dẫn cho agent không phải Claude Code</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="kicker reveal">Nguồn</p>
+    <h2 class="reveal">Đứng trên vai những dự án mã nguồn mở.</h2>
+    <p class="sub reveal">Code của ImageFly theo giấy phép MIT. Phần chép từ nơi khác giữ giấy phép gốc, chi tiết trong NOTICE.md.</p>
+    <div class="credits">
+      <a class="cr reveal" href="https://github.com/andyluu98/MotionFly"><b>MotionFly</b><span>Nền tảng của quy trình, bộ trộn âm, giọng đọc.</span><em>MIT</em></a>
+      <a class="cr reveal" href="https://github.com/heygen-com/hyperframes"><b>HyperFrames</b><span>Dựng HTML thành MP4, kiểm tra bố cục.</span><em>Apache-2.0</em></a>
+      <a class="cr reveal" href="https://github.com/pnnbao97/VieNeu-TTS"><b>VieNeu-TTS</b><span>Giọng đọc tiếng Việt.</span><em>Apache-2.0</em></a>
+      <a class="cr reveal" href="https://github.com/SYSTRAN/faster-whisper"><b>faster-whisper</b><span>Chấm phát âm, mốc thời gian từng từ.</span><em>MIT</em></a>
+      <a class="cr reveal" href="https://github.com/bestagentkits/motion-video-skill"><b>motion-video-skill</b><span>Đo nhịp nhạc, quy tắc trộn âm.</span><em>MIT</em></a>
+      <a class="cr reveal" href="https://gsap.com"><b>GSAP</b><span>Chuyển động trong từng cảnh.</span><em>GSAP (miễn phí)</em></a>
+      <a class="cr reveal" href="https://fonts.google.com/specimen/Be+Vietnam+Pro"><b>Be Vietnam Pro</b><span>Font đủ dấu tiếng Việt.</span><em>SIL OFL</em></a>
+      <a class="cr reveal" href="https://ffmpeg.org"><b>ffmpeg</b><span>Đọc ghi âm thanh, video.</span><em>LGPL/GPL</em></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>ImageFly · MIT · © 2026 Nguyễn Anh Kha, phần chép từ MotionFly © andyluu98</span>
+    <a href="https://github.com/anhkhabk-dev/ImageFly">github.com/anhkhabk-dev/ImageFly</a>
+  </div>
+</footer>
+<div class="toast" id="toast">Đã chép</div>
+
+<script>
+(() => {
+  const video = document.getElementById("demo"), screen = document.getElementById("screen"), note = document.getElementById("demo-note");
+  const demos = {
+    s: { src: "site/media/demo-slideshow-16x9", portrait: false,
+         note: "Slideshow 16:9 từ 7 ảnh: nhạc gốc soạn bằng code, hiệu ứng âm thanh ở các chỗ chuyển cảnh." },
+    v: { src: "site/media/demo-voiceover-9x16", portrait: true,
+         note: "Có lời đọc 9:16: giọng VieNeu đọc, ảnh hiện đúng lúc từ khóa, phụ đề in lên hình, nhạc hạ khi có giọng." },
+  };
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    const d = demos[b.dataset.k];
+    video.poster = d.src + ".jpg"; video.src = d.src + ".mp4";
+    screen.classList.toggle("portrait", d.portrait); note.textContent = d.note;
+  }));
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => {
+    const t = document.getElementById(b.dataset.copy).innerText;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => {
+      const el = document.getElementById("toast"); el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1400);
+    }).catch(() => {});
+  }));
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .12 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>

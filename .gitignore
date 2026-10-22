@@ -1,0 +1,31 @@
+# Video projects and outputs (large, per-user)
+videos/
+*.mp4
+*.wav
+*.mov
+renders/
+snapshots/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Node
+node_modules/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Site media is published on purpose
+!site/media/*.mp4
+
+# Sao luu và d? li?u làm vi?c c?c b?
+_backup/

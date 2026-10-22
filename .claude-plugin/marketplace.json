@@ -1,0 +1,12 @@
+{
+  "name": "imagefly",
+  "owner": { "name": "Nguyễn Anh Kha" },
+  "description": "Plugin Claude Code làm video từ ảnh có sẵn (slideshow hoặc có lời đọc).",
+  "plugins": [
+    {
+      "name": "imagefly",
+      "source": "./",
+      "description": "Biến thư mục ảnh thành video 9:16 hoặc 16:9: hiệu ứng, chuyển cảnh, nhạc nền, lời đọc tiếng Việt tùy chọn, phụ đề."
+    }
+  ]
+}
