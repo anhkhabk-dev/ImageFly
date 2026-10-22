@@ -186,7 +186,14 @@ def bpm_of(project: Path, brief: dict) -> float | None:
     return None
 
 
+def is_wide(im: dict, W: int, H: int) -> bool:
+    """Ảnh rộng hơn khung nhiều (ví dụ ảnh ngang trong khung dọc): phủ kín thì chỉ thấy một dải ảnh."""
+    return im["w"] / im["h"] > (W / H) * 1.05
+
+
 def choose_fit(brief: dict, im: dict, W: int, H: int) -> str:
+    if im.get("fit") in ("cover", "contain"):
+        return im["fit"]
     if brief["fit"] in ("cover", "contain"):
         return brief["fit"]
     r = (im["w"] / im["h"]) / (W / H)
@@ -351,9 +358,12 @@ def plan(project: Path) -> dict:
         out.append({
             "id": f"s{i + 1:02d}", "img": im["id"], "file": im["file"], "bg": im["bg"], "w": im["w"], "h": im["h"],
             "start": s["start"], "end": round(min(total, nxt + (OVERLAP if i + 1 < len(shots) else 0)), 3),
-            "fit": fit, "effect": im.get("effect") or choose_effect(i, im, fit, W, H),
+            "fit": fit,
+            # phủ kín ảnh rộng trong khung hẹp: camera quét ngang giữa các điểm nhấn (focus, focus_to)
+            "effect": im.get("effect") or ("sweep" if fit == "cover" and is_wide(im, W, H)
+                                           else choose_effect(i, im, fit, W, H)),
             "transition": im.get("transition") or choose_transition(brief, i),
-            "focus": im.get("focus", [0.5, 0.5]), "caption": im.get("caption", ""),
+            "focus": im.get("focus", [0.5, 0.5]), "focus_to": im.get("focus_to"), "caption": im.get("caption", ""),
         })
     caps_on = bool(captions) and brief["burn_captions"]
     tplan = plan_title(brief, out, total, W, H, caps_on)
@@ -403,7 +413,7 @@ SHOT_HTML = r"""<!doctype html>
       <div id="__SID__-root" data-composition-id="__SID__" data-width="__W__" data-height="__H__">
         <div id="__SID__-stage">
           __BG__
-          <div id="__SID__-cam"><img class="__IMGCLASS__" src="__FILE__" /></div>
+          <div id="__SID__-cam"><img id="__SID__-img" class="__IMGCLASS__" src="__FILE__" __IMGSTYLE__ /></div>
           <div id="__SID__-grade"></div>
           __CAPTION__
         </div>
@@ -416,6 +426,7 @@ SHOT_HTML = r"""<!doctype html>
           const id = cfg.sid, D = cfg.dur, T = cfg.ov;
           const cam = "#" + id + "-cam", bgw = "#" + id + "-bgwrap", stage = "#" + id + "-stage";
           tl.fromTo(cam, cfg.cam.from, { ...cfg.cam.to, duration: D, ease: "none" }, 0);
+          if (cfg.sweep) tl.fromTo("#" + id + "-img", { x: cfg.sweep.x0 }, { x: cfg.sweep.x1, duration: D, ease: "none" }, 0);
           if (cfg.hasBg) tl.fromTo(bgw, cfg.bgcam.from, { ...cfg.bgcam.to, duration: D, ease: "none" }, 0);
           const tin = {
             fade: () => tl.fromTo(stage, { opacity: 0 }, { opacity: 1, duration: T, ease: "power1.inOut" }, 0),
@@ -575,18 +586,30 @@ def compose(project: Path) -> None:
         grade = f"{grade}, {look['tint']}"
     for i, s in enumerate(sh["shots"]):
         sid = s["id"]
-        cam = camera(s["effect"], s["focus"])
+        sweep, img_style = None, ""
+        if s["effect"] == "sweep":
+            # ảnh giữ nguyên chiều cao khung, rộng hơn khung; trượt cửa sổ nhìn từ điểm nhấn này sang điểm nhấn kia (px, chỉ dùng transform)
+            img_w = H * s["w"] / s["h"]
+            half = W / img_w / 2
+            c0 = min(max(s["focus"][0], half), 1 - half)
+            to = s.get("focus_to")
+            c1 = min(max(to[0] if to else c0 + (0.03 if i % 2 == 0 else -0.03), half), 1 - half)
+            sweep = {"x0": round(-(c0 * img_w - W / 2)), "x1": round(-(c1 * img_w - W / 2))}
+            img_style = f'style="left:0; right:auto; width:{img_w:.1f}px;"'
+            cam = {"from": {"scale": 1.0, "transformOrigin": "50% 50%"}, "to": {"scale": 1.08}}
+        else:
+            cam = camera(s["effect"], s["focus"])
         hasbg = s["fit"] == "contain"
         cap_html = f'<div id="{sid}-cap">{esc(s["caption"])}</div>' if s["caption"] else ""
         cfg = {"sid": sid, "dur": round(s["end"] - s["start"], 3), "ov": OVERLAP, "cam": cam,
                "bgcam": parallax_bg(cam), "hasBg": hasbg, "tin": s["transition"], "first": i == 0,
-               "last": i == len(sh["shots"]) - 1, "caption": bool(s["caption"])}
+               "last": i == len(sh["shots"]) - 1, "caption": bool(s["caption"]), "sweep": sweep}
         fx, fy = s["focus"]
         html = (SHOT_HTML
                 .replace("__CFG__", json.dumps(cfg, ensure_ascii=False))
                 .replace("__BG__", f'<div id="{sid}-bgwrap"><img src="{s["bg"]}" /></div>' if hasbg else "")
                 .replace("__CAPTION__", cap_html)
-                .replace("__IMGCLASS__", "shadow" if hasbg else "")
+                .replace("__IMGCLASS__", "shadow" if hasbg else "").replace("__IMGSTYLE__", img_style)
                 .replace("__FILE__", s["file"]).replace("__FIT__", s["fit"])
                 .replace("__OPOS__", f"{fx * 100:.0f}% {fy * 100:.0f}%")
                 .replace("__FILTER__", look["filter"] if look["filter"] != "none" else "")

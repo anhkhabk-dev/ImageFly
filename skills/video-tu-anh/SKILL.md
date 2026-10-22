@@ -36,6 +36,8 @@ Lệnh xoay ảnh theo EXIF, giảm cỡ, in danh sách `i01...` (kích thước
 
 - `"skip": true` bỏ ảnh; đổi thứ tự bằng cách sắp lại các phần tử.
 - `"focus": [x, y]` (0 đến 1) điểm nhấn: zoom và cắt hướng về đó (ví dụ người đang hàn ở góc phải dưới: `[0.8, 0.7]`).
+- `"focus_to": [x]` (0 đến 1): điểm nhấn thứ hai. Khi ảnh rộng hơn khung nhiều (ảnh ngang trong khung dọc) và `fit` là `cover`, camera tự **quét ngang** (`sweep`) từ `focus` sang `focus_to`, ví dụ ảnh chụp đôi: quét từ mặt người này sang mặt người kia. Xem ảnh, đặt `focus` đúng vào mặt người (x tính theo chiều rộng ảnh gốc), rồi kiểm tra khung hình đầu, giữa, cuối của từng cảnh trước khi giao.
+- `"fit": "cover" | "contain"` cho riêng ảnh này (ghi đè `fit` trong brief). Muốn ảnh ngang phủ kín khung dọc: đặt `fit: "cover"` trong `brief.json`; mặc định `auto` đặt ảnh giữa trên nền mờ để không cắt mất người.
 - `"effect"`: `zoom-in`, `zoom-out`, `push-focus`, `pan-left`, `pan-right`, `pan-up`, `pan-down`, `drift`, `none`.
 - `"transition"`: `fade`, `slide`, `slideup`, `zoom`, `wipe`.
 - `"caption"`: chú thích ngắn hiện dưới ảnh (chế độ slideshow).
