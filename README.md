@@ -26,12 +26,12 @@ Phát triển từ [MotionFly](https://github.com/andyluu98/MotionFly), thêm đ
 - 5 kiểu chuyển cảnh: `fade`, `slide`, `slideup`, `zoom`, `wipe` (hoặc `mix` xoay vòng).
 - 6 tông màu: `natural`, `warm`, `cool`, `cinematic`, `vivid`, `bw`.
 - Tiêu đề in hoa, hiệu ứng chữ bật lên, tự bay về góc và đổi góc, đổi màu theo thời gian (góc chọn xa chủ thể trong ảnh); có thể tự thiết kế bằng `title_plan`.
-- Nhạc: file của anh (chọn đoạn bắt đầu, nối nhiều bài, tự đo nhịp để cắt ảnh theo nhịp), nhạc tổng hợp bằng code (4 mood), **nhạc soạn từ bản nhạc** `score.json` (giai điệu, hợp âm, nhạc cụ), hoặc không nhạc. Trộn chuẩn -14 LUFS.
+- Nhạc: file của bạn (chọn đoạn bắt đầu, nối nhiều bài, tự đo nhịp để cắt ảnh theo nhịp), nhạc tổng hợp bằng code (4 mood), **nhạc soạn từ bản nhạc** `score.json` (giai điệu, hợp âm, nhạc cụ), hoặc không nhạc. Trộn chuẩn -14 LUFS.
 - Hiệu ứng âm thanh tổng hợp bằng code đặt đúng chỗ chuyển cảnh và khi tiêu đề đổi góc (gió quét, swish, tiếng trầm, chuông, lấp lánh).
-- **Có file âm thanh của anh thì chỉ dùng file đó:** tự bỏ nhạc tổng hợp và hiệu ứng âm thanh do agent tạo (đặt `sfx: true` nếu anh muốn thêm sfx lên trên).
+- **Có file âm thanh của bạn thì chỉ dùng file đó:** tự bỏ nhạc tổng hợp và hiệu ứng âm thanh do agent tạo (đặt `sfx: true` nếu bạn muốn thêm sfx lên trên).
 - Chú thích từng ảnh, vùng an toàn cho mỗi khung hình.
 
-**Về nhạc có bản quyền:** ImageFly không tái tạo giai điệu hay lời của bài hát thương mại. Dùng file nhạc anh có quyền sử dụng, bản nhạc phạm vi công cộng, hoặc nhạc gốc soạn theo phong cách.
+**Về nhạc có bản quyền:** ImageFly không tái tạo giai điệu hay lời của bài hát thương mại. Dùng file nhạc bạn có quyền sử dụng, bản nhạc phạm vi công cộng, hoặc nhạc gốc soạn theo phong cách.
 
 ## Cài đặt
 
