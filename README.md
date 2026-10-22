@@ -1,5 +1,7 @@
 # ImageFly: ảnh có sẵn thành video
 
+Trang giới thiệu, video mẫu: **https://anhkhabk-dev.github.io/ImageFly/**
+
 Công cụ dòng lệnh chạy trong agent (Claude Code, Antigravity...) biến một thư mục ảnh thành video MP4: quét máy quay (Ken Burns), chuyển cảnh, nhạc nền, tiêu đề, phụ đề, và tùy chọn lời đọc tiếng Việt. Khung **9:16** hoặc **16:9**.
 
 Phát triển từ [MotionFly](https://github.com/andyluu98/MotionFly), thêm đường vào bằng ảnh có sẵn và chế độ slideshow.
