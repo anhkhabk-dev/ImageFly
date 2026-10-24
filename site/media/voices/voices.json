@@ -1,0 +1,227 @@
+[
+ {
+  "id": "Adam bựa",
+  "slug": "adam-bua",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": true,
+  "seconds": 3.4
+ },
+ {
+  "id": "Trúc Ly",
+  "slug": "truc-ly",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": true,
+  "seconds": 2.6
+ },
+ {
+  "id": "Thiện Minh",
+  "slug": "thien-minh",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách kể chuyện",
+  "featured": true,
+  "seconds": 3.0
+ },
+ {
+  "id": "Mai Anh",
+  "slug": "mai-anh",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Phong cách tin tức",
+  "featured": true,
+  "seconds": 3.4
+ },
+ {
+  "id": "Hải Đăng",
+  "slug": "hai-dang",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": true,
+  "seconds": 3.0
+ },
+ {
+  "id": "Thùy Dung",
+  "slug": "thuy-dung",
+  "gender": "Nữ",
+  "region": "Nam",
+  "style": "Phong cách tin tức",
+  "featured": true,
+  "seconds": 2.9
+ },
+ {
+  "id": "Thiền Tâm Đức",
+  "slug": "thien-tam-duc",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách kể chuyện",
+  "featured": true,
+  "seconds": 4.1
+ },
+ {
+  "id": "Ngọc Huyền",
+  "slug": "ngoc-huyen",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Giọng đọc tự nhiên",
+  "featured": true,
+  "seconds": 3.4
+ },
+ {
+  "id": "Quang Sơn",
+  "slug": "quang-son",
+  "gender": "Nam",
+  "region": "Trung",
+  "style": "Phong cách tự nhiên",
+  "featured": true,
+  "seconds": 3.9
+ },
+ {
+  "id": "Ngọc Trân",
+  "slug": "ngoc-tran",
+  "gender": "Nữ",
+  "region": "Trung",
+  "style": "Phong cách tự nhiên",
+  "featured": true,
+  "seconds": 3.7
+ },
+ {
+  "id": "Minh Đức",
+  "slug": "minh-duc",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tin tức",
+  "featured": false,
+  "seconds": 3.7
+ },
+ {
+  "id": "Phạm Tuyên",
+  "slug": "pham-tuyen",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": false,
+  "seconds": 3.2
+ },
+ {
+  "id": "Thái Sơn",
+  "slug": "thai-son",
+  "gender": "Nam",
+  "region": "Nam",
+  "style": "Phong cách kể chuyện",
+  "featured": false,
+  "seconds": 3.4
+ },
+ {
+  "id": "Xuân Vĩnh",
+  "slug": "xuan-vinh",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": false,
+  "seconds": 3.4
+ },
+ {
+  "id": "Thanh Bình",
+  "slug": "thanh-binh",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách kể chuyện",
+  "featured": false,
+  "seconds": 2.9
+ },
+ {
+  "id": "Ngọc Linh",
+  "slug": "ngoc-linh",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Phong cách kể chuyện",
+  "featured": false,
+  "seconds": 3.5
+ },
+ {
+  "id": "Đoan Trang",
+  "slug": "doan-trang",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": false,
+  "seconds": 3.5
+ },
+ {
+  "id": "Thục Đoan",
+  "slug": "thuc-doan",
+  "gender": "Nữ",
+  "region": "Nam",
+  "style": "Phong cách kể chuyện",
+  "featured": false,
+  "seconds": 3.4
+ },
+ {
+  "id": "Minh Triết",
+  "slug": "minh-triet",
+  "gender": "Nam",
+  "region": "Nam",
+  "style": "Phong cách tin tức",
+  "featured": false,
+  "seconds": 3.0
+ },
+ {
+  "id": "Mỹ Duyên",
+  "slug": "my-duyen",
+  "gender": "Nữ",
+  "region": "Nam",
+  "style": "Phong cách đọc truyện",
+  "featured": false,
+  "seconds": 4.1
+ },
+ {
+  "id": "Quỳnh Anh",
+  "slug": "quynh-anh",
+  "gender": "Nữ",
+  "region": "Bắc",
+  "style": "Phong cách đọc truyện",
+  "featured": false,
+  "seconds": 3.2
+ },
+ {
+  "id": "Đức Trí",
+  "slug": "duc-tri",
+  "gender": "Nam",
+  "region": "Nam",
+  "style": "Phong cách đọc truyện",
+  "featured": false,
+  "seconds": 4.2
+ },
+ {
+  "id": "Kim Thanh",
+  "slug": "kim-thanh",
+  "gender": "Nữ",
+  "region": "Nam",
+  "style": "Phong cách đọc truyện",
+  "featured": false,
+  "seconds": 4.5
+ },
+ {
+  "id": "Adam",
+  "slug": "adam",
+  "gender": "Nam",
+  "region": "Nam",
+  "style": "Giọng đọc tự nhiên",
+  "featured": false,
+  "seconds": 3.1
+ },
+ {
+  "id": "Quốc Tuấn",
+  "slug": "quoc-tuan",
+  "gender": "Nam",
+  "region": "Bắc",
+  "style": "Phong cách tự nhiên",
+  "featured": false,
+  "seconds": 2.7
+ }
+]

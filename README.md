@@ -28,6 +28,7 @@ Phát triển từ [MotionFly](https://github.com/andyluu98/MotionFly), thêm đ
 - 6 tông màu: `natural`, `warm`, `cool`, `cinematic`, `vivid`, `bw`.
 - Tiêu đề in hoa, hiệu ứng chữ bật lên, tự bay về góc và đổi góc, đổi màu theo thời gian (góc chọn xa chủ thể trong ảnh); có thể tự thiết kế bằng `title_plan`.
 - Nhạc: file của bạn (chọn đoạn bắt đầu, nối nhiều bài, tự đo nhịp để cắt ảnh theo nhịp), nhạc tổng hợp bằng code (4 mood), **nhạc soạn từ bản nhạc** `score.json` (giai điệu, hợp âm, nhạc cụ), hoặc không nhạc. Trộn chuẩn -14 LUFS.
+- **25 giọng tiếng Việt** (VieNeu): lọc theo giới tính, vùng miền, phong cách (tự nhiên, kể chuyện, tin tức, đọc truyện) và nghe thử từng giọng trên trang giới thiệu, rồi đặt tên giọng vào `voice` trong `script.json`.
 - Hiệu ứng âm thanh tổng hợp bằng code đặt đúng chỗ chuyển cảnh và khi tiêu đề đổi góc (gió quét, swish, tiếng trầm, chuông, lấp lánh).
 - **Có file âm thanh của bạn thì chỉ dùng file đó:** tự bỏ nhạc tổng hợp và hiệu ứng âm thanh do agent tạo (đặt `sfx: true` nếu bạn muốn thêm sfx lên trên).
 - Chú thích từng ảnh, vùng an toàn cho mỗi khung hình.
