@@ -28,6 +28,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +69,7 @@ DEFAULT_BRIEF = {
     "title_hop_s": 3.0,           # tối thiểu bao nhiêu giây giữa hai lần đổi góc
     "shot_beats": 4,              # slideshow: số nhịp mỗi ảnh (nếu biết BPM)
     "shot_s": None,               # slideshow: ép số giây mỗi ảnh
+    "clip_s": 4.0,                # slideshow: tối đa bao nhiêu giây lấy từ mỗi clip video (riêng từng clip: "len")
     "duration_s": None,           # slideshow: tổng thời lượng mong muốn
     "burn_captions": True,        # voiceover: in phụ đề lên hình
     "voice": "Ngọc Huyền",
@@ -134,15 +136,58 @@ def brief_of(project: Path) -> dict:
 
 # ---------- nạp ảnh ----------
 
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
+VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi", ".mts", ".3gp"}
+
+
+def probe_video(path: Path) -> dict:
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                        "stream=width,height:format=duration", "-of", "json", str(path)],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    d = json.loads(r.stdout or "{}")
+    st = (d.get("streams") or [{}])[0]
+    if not st.get("width"):
+        raise SystemExit(f"Không đọc được video: {path.name}")
+    return {"w": int(st["width"]), "h": int(st["height"]), "dur": float(d["format"]["duration"])}
+
+
+def ingest_video(project: Path, f: Path, iid: str) -> dict:
+    """Chuẩn hóa clip: bỏ tiếng (-an) để chỉ trộn giọng đọc và nhạc mới, H.264 30 fps, khóa hình mỗi giây,
+    tối đa 1920 cạnh dài, tự xoay đúng chiều. Lấy khung giữa làm poster, khung cuối giữ hình khi clip hết, nền mờ."""
+    from PIL import Image, ImageFilter
+
+    out = project / "assets" / f"{iid}.mp4"
+    code = run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(f), "-an", "-vf",
+                "scale=1920:1920:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30,format=yuv420p",
+                "-c:v", "libx264", "-crf", "20", "-preset", "veryfast", "-g", "30", "-keyint_min", "30",
+                "-movflags", "+faststart", str(out)])
+    if code or not out.exists():
+        raise SystemExit(f"Không chuẩn hóa được clip: {f.name}")
+    info = probe_video(out)
+    poster, last = project / "assets" / f"{iid}.jpg", project / "assets" / f"{iid}_last.jpg"
+    run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{info['dur'] / 2:.2f}", "-i", str(out),
+         "-frames:v", "1", "-q:v", "3", str(poster)])
+    run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-sseof", "-0.2", "-i", str(out),
+         "-update", "1", "-frames:v", "1", "-q:v", "3", str(last)])
+    with Image.open(poster) as im:
+        bg = im.convert("RGB")
+        bg.thumbnail((540, 540))
+        bg.filter(ImageFilter.GaussianBlur(10)).save(project / "assets" / "bg" / f"{iid}.jpg", quality=80)
+    return {"id": iid, "type": "video", "source": str(f), "file": f"assets/{iid}.mp4", "poster": f"assets/{iid}.jpg",
+            "last": f"assets/{iid}_last.jpg", "bg": f"assets/bg/{iid}.jpg", "w": info["w"], "h": info["h"],
+            "dur": round(info["dur"], 2)}
+
+
 def ingest(project: Path, images_dir: Path, order: str = "name") -> list[dict]:
     from PIL import Image, ImageFilter, ImageOps
 
-    exts = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
-    files = [f for f in images_dir.iterdir() if f.suffix.lower() in exts]
+    files = [f for f in images_dir.iterdir() if f.suffix.lower() in IMAGE_EXTS | VIDEO_EXTS]
     if not files:
-        raise SystemExit(f"Không có ảnh trong {images_dir}")
+        raise SystemExit(f"Không có ảnh hoặc video trong {images_dir}")
 
     def date_key(f: Path):
+        if f.suffix.lower() in VIDEO_EXTS:
+            return (time.strftime("%Y:%m:%d %H:%M:%S", time.localtime(f.stat().st_mtime)), f.name)
         try:
             with Image.open(f) as im:
                 ex = im.getexif()
@@ -155,6 +200,9 @@ def ingest(project: Path, images_dir: Path, order: str = "name") -> list[dict]:
     out = []
     for i, f in enumerate(files, 1):
         iid = f"i{i:02d}"
+        if f.suffix.lower() in VIDEO_EXTS:
+            out.append(ingest_video(project, f, iid))
+            continue
         with Image.open(f) as im:
             im = ImageOps.exif_transpose(im).convert("RGB")
             if max(im.size) > MAX_EDGE:
@@ -164,8 +212,8 @@ def ingest(project: Path, images_dir: Path, order: str = "name") -> list[dict]:
             bg = im.copy()
             bg.thumbnail((540, 540))
             bg.filter(ImageFilter.GaussianBlur(10)).save(project / "assets" / "bg" / f"{iid}.jpg", quality=80)
-            out.append({"id": iid, "source": str(f), "file": f"assets/{iid}.jpg", "bg": f"assets/bg/{iid}.jpg",
-                        "w": im.width, "h": im.height})
+            out.append({"id": iid, "type": "image", "source": str(f), "file": f"assets/{iid}.jpg",
+                        "bg": f"assets/bg/{iid}.jpg", "w": im.width, "h": im.height})
     jsave(project / "images.json", out)
     return out
 
@@ -307,8 +355,15 @@ def plan(project: Path) -> dict:
         if brief["duration_s"]:
             base = min(8.0, max(1.5, (brief["duration_s"] - TAIL) / n))
         t = 0.0
+        beat_s = 60 / bpm if bpm else None
         for im in imgs:
-            length = base * (im.get("beats", brief["shot_beats"]) / brief["shot_beats"]) if "beats" in im else base
+            if im.get("type") == "video":
+                avail = im["dur"] - im.get("trim_start", 0)
+                length = min(avail, im.get("len") or brief["clip_s"])
+                if beat_s and not im.get("len") and length > beat_s:   # cắt clip trùng nhịp nhạc
+                    length = math.floor(length / beat_s) * beat_s
+            else:
+                length = base * (im.get("beats", brief["shot_beats"]) / brief["shot_beats"]) if "beats" in im else base
             shots.append({"img": im, "start": round(t, 3)})
             t += length
         total = round(t + TAIL, 3)
@@ -355,9 +410,17 @@ def plan(project: Path) -> dict:
         im = s["img"]
         fit = choose_fit(brief, im, W, H)
         nxt = shots[i + 1]["start"] if i + 1 < len(shots) else total
+        is_video = im.get("type") == "video"
+        vstart = im.get("trim_start", 0) if is_video else 0
+        end = round(min(total, nxt + (OVERLAP if i + 1 < len(shots) else 0)), 3)
+        if is_video and im["dur"] - vstart < end - s["start"] - 0.05:
+            print(f"Lưu ý: clip {im['id']} chỉ còn {im['dur'] - vstart:.1f}s, cảnh dài {end - s['start']:.1f}s: "
+                  "giữ khung hình cuối đến hết cảnh")
         out.append({
-            "id": f"s{i + 1:02d}", "img": im["id"], "file": im["file"], "bg": im["bg"], "w": im["w"], "h": im["h"],
-            "start": s["start"], "end": round(min(total, nxt + (OVERLAP if i + 1 < len(shots) else 0)), 3),
+            "id": f"s{i + 1:02d}", "img": im["id"], "type": "video" if is_video else "image",
+            "file": im["file"], "bg": im["bg"], "w": im["w"], "h": im["h"],
+            "last": im.get("last"), "vstart": vstart, "vdur": round(im["dur"] - vstart, 3) if is_video else None,
+            "start": s["start"], "end": end,
             "fit": fit,
             # phủ kín ảnh rộng trong khung hẹp: camera quét ngang giữa các điểm nhấn (focus, focus_to)
             "effect": im.get("effect") or ("sweep" if fit == "cover" and is_wide(im, W, H)
@@ -380,7 +443,8 @@ def plan(project: Path) -> dict:
                                         "style": "imagefly", "scenes": [{"id": s["id"], "visual": s["img"]} for s in out]})
     print(f"PLAN {len(out)} cảnh, {total}s, {brief['aspect']} ({W}x{H}), chế độ {brief['mode']}")
     for s in out:
-        print(f"  {s['id']} {s['img']} {s['start']:>6.2f}s-{s['end']:>6.2f}s {s['fit']:<7} {s['effect']:<10} {s['transition']}")
+        kind = "clip" if s["type"] == "video" else "anh "
+        print(f"  {s['id']} {s['img']} {kind} {s['start']:>6.2f}s-{s['end']:>6.2f}s {s['fit']:<7} {s['effect']:<10} {s['transition']}")
     return {"total": total, "shots": out}
 
 
@@ -402,9 +466,10 @@ SHOT_HTML = r"""<!doctype html>
         #__SID__-stage { position: absolute; inset: 0; overflow: hidden; }
         #__SID__-bgwrap, #__SID__-cam { position: absolute; inset: 0; will-change: transform; }
         #__SID__-bgwrap img { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; filter: __FILTER__ brightness(0.62); }
-        #__SID__-cam img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: __FIT__;
+        #__SID__-media { position: absolute; inset: 0; }
+        #__SID__-media img, #__SID__-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: __FIT__;
           object-position: __OPOS__; filter: __FILTER__; }
-        #__SID__-cam img.shadow { filter: __FILTER__ drop-shadow(0 18px 40px rgba(0,0,0,0.55)); }
+        #__SID__-media .shadow { filter: __FILTER__ drop-shadow(0 18px 40px rgba(0,0,0,0.55)); }
         #__SID__-grade { position: absolute; inset: 0; pointer-events: none; background: __GRADE__; }
         #__SID__-cap { position: absolute; left: 7%; right: 7%; bottom: __CAP_BOTTOM__; text-align: center; color: #fff; opacity: 0;
           font-size: __CAP__px; font-weight: 700; line-height: 1.25; text-shadow: 0 3px 18px rgba(0,0,0,0.8); }
@@ -413,7 +478,7 @@ SHOT_HTML = r"""<!doctype html>
       <div id="__SID__-root" data-composition-id="__SID__" data-width="__W__" data-height="__H__">
         <div id="__SID__-stage">
           __BG__
-          <div id="__SID__-cam"><img id="__SID__-img" class="__IMGCLASS__" src="__FILE__" __IMGSTYLE__ /></div>
+          <div id="__SID__-cam"><div id="__SID__-media" __MEDIASTYLE__>__MEDIA__</div></div>
           <div id="__SID__-grade"></div>
           __CAPTION__
         </div>
@@ -426,7 +491,7 @@ SHOT_HTML = r"""<!doctype html>
           const id = cfg.sid, D = cfg.dur, T = cfg.ov;
           const cam = "#" + id + "-cam", bgw = "#" + id + "-bgwrap", stage = "#" + id + "-stage";
           tl.fromTo(cam, cfg.cam.from, { ...cfg.cam.to, duration: D, ease: "none" }, 0);
-          if (cfg.sweep) tl.fromTo("#" + id + "-img", { x: cfg.sweep.x0 }, { x: cfg.sweep.x1, duration: D, ease: "none" }, 0);
+          if (cfg.sweep) tl.fromTo("#" + id + "-media", { x: cfg.sweep.x0 }, { x: cfg.sweep.x1, duration: D, ease: "none" }, 0);
           if (cfg.hasBg) tl.fromTo(bgw, cfg.bgcam.from, { ...cfg.bgcam.to, duration: D, ease: "none" }, 0);
           const tin = {
             fade: () => tl.fromTo(stage, { opacity: 0 }, { opacity: 1, duration: T, ease: "power1.inOut" }, 0),
@@ -586,7 +651,7 @@ def compose(project: Path) -> None:
         grade = f"{grade}, {look['tint']}"
     for i, s in enumerate(sh["shots"]):
         sid = s["id"]
-        sweep, img_style = None, ""
+        sweep, media_style = None, ""
         if s["effect"] == "sweep":
             # ảnh giữ nguyên chiều cao khung, rộng hơn khung; trượt cửa sổ nhìn từ điểm nhấn này sang điểm nhấn kia (px, chỉ dùng transform)
             img_w = H * s["w"] / s["h"]
@@ -595,7 +660,7 @@ def compose(project: Path) -> None:
             to = s.get("focus_to")
             c1 = min(max(to[0] if to else c0 + (0.03 if i % 2 == 0 else -0.03), half), 1 - half)
             sweep = {"x0": round(-(c0 * img_w - W / 2)), "x1": round(-(c1 * img_w - W / 2))}
-            img_style = f'style="left:0; right:auto; width:{img_w:.1f}px;"'
+            media_style = f'style="left:0; right:auto; width:{img_w:.1f}px;"'
             cam = {"from": {"scale": 1.0, "transformOrigin": "50% 50%"}, "to": {"scale": 1.08}}
         else:
             cam = camera(s["effect"], s["focus"])
@@ -605,12 +670,22 @@ def compose(project: Path) -> None:
                "bgcam": parallax_bg(cam), "hasBg": hasbg, "tin": s["transition"], "first": i == 0,
                "last": i == len(sh["shots"]) - 1, "caption": bool(s["caption"]), "sweep": sweep}
         fx, fy = s["focus"]
+        cls = ' class="shadow"' if hasbg else ""
+        if s.get("type") == "video":
+            # clip đã bỏ tiếng từ lúc nạp; khung cuối nằm dưới để hình không biến mất khi clip hết trước cảnh;
+            # data-media-start cắt điểm vào; thời lượng không quá phần clip còn lại
+            vdur = round(min(s["end"] - s["start"], s["vdur"]), 3)
+            media = (f'<img{cls} src="{s["last"]}" />'
+                     f'<video id="{sid}-vid"{cls} src="{s["file"]}" muted playsinline data-start="0" '
+                     f'data-duration="{vdur}" data-media-start="{s["vstart"]}"></video>')
+        else:
+            media = f'<img id="{sid}-img"{cls} src="{s["file"]}" />'
         html = (SHOT_HTML
                 .replace("__CFG__", json.dumps(cfg, ensure_ascii=False))
                 .replace("__BG__", f'<div id="{sid}-bgwrap"><img src="{s["bg"]}" /></div>' if hasbg else "")
                 .replace("__CAPTION__", cap_html)
-                .replace("__IMGCLASS__", "shadow" if hasbg else "").replace("__IMGSTYLE__", img_style)
-                .replace("__FILE__", s["file"]).replace("__FIT__", s["fit"])
+                .replace("__MEDIA__", media).replace("__MEDIASTYLE__", media_style)
+                .replace("__FIT__", s["fit"])
                 .replace("__OPOS__", f"{fx * 100:.0f}% {fy * 100:.0f}%")
                 .replace("__FILTER__", look["filter"] if look["filter"] != "none" else "")
                 .replace("__GRADE__", grade)
@@ -784,9 +859,11 @@ def new(slug: str, images: Path, args) -> Path:
              "look": args.look, "music": args.music}
     jsave(project / "brief.json", brief)
     imgs = ingest(project, images, args.order)
-    print(f"NEW {project}\n  {len(imgs)} ảnh:")
+    n_clip = sum(1 for im in imgs if im.get("type") == "video")
+    print(f"NEW {project}\n  {len(imgs) - n_clip} ảnh, {n_clip} clip video (clip đã bỏ tiếng):")
     for im in imgs:
-        print(f"  {im['id']} {im['w']}x{im['h']} {'dọc' if im['h'] > im['w'] else 'ngang'}  {Path(im['source']).name}")
+        kind = f"clip {im['dur']:.1f}s" if im.get("type") == "video" else "ảnh"
+        print(f"  {im['id']} {kind:<10} {im['w']}x{im['h']} {'dọc' if im['h'] > im['w'] else 'ngang'}  {Path(im['source']).name}")
     return project
 
 

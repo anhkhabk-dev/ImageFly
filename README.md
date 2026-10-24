@@ -20,6 +20,7 @@ Phát triển từ [MotionFly](https://github.com/andyluu98/MotionFly), thêm đ
 
 ## Tính năng
 
+- **Thư viện ảnh và clip video:** trộn lẫn ảnh và video trong cùng thư mục. Clip được chuẩn hóa, cắt đoạn (`trim_start`, `len`), tự bỏ tiếng gốc để trộn giọng đọc và nhạc mới; dùng chung hiệu ứng, chuyển cảnh, tiêu đề với ảnh.
 - Nạp ảnh tự động: xoay theo EXIF, giảm cỡ, sắp theo tên hoặc ngày chụp; ảnh gốc không bị sửa.
 - Ảnh lệch tỉ lệ nhiều so với khung được đặt giữa trên nền mờ của chính nó; lệch ít thì phủ kín và quét máy quay.
 - 9 hiệu ứng máy quay: `zoom-in`, `zoom-out`, `push-focus`, `pan-left/right/up/down`, `drift`, `none`; điểm nhấn `focus` cho từng ảnh.

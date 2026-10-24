@@ -1,6 +1,6 @@
 ---
 name: video-tu-anh
-description: Làm video từ ảnh có sẵn (slideshow có nhạc và hiệu ứng, hoặc có lời đọc tiếng Việt), khung 9:16 hoặc 16:9, xuất MP4. Dùng khi người dùng gõ "/video-tu-anh", đưa thư mục ảnh và nói "làm video từ ảnh", "slideshow", "ghép ảnh thành video", "video có nhạc từ ảnh", "thêm giọng đọc cho ảnh".
+description: Làm video từ ảnh và clip video có sẵn (slideshow có nhạc và hiệu ứng, hoặc có lời đọc tiếng Việt), khung 9:16 hoặc 16:9, xuất MP4; tiếng gốc của clip luôn bị bỏ, chỉ trộn giọng đọc và nhạc mới. Dùng khi người dùng gõ "/video-tu-anh", đưa thư mục ảnh hoặc clip và nói "làm video từ ảnh", "slideshow", "ghép ảnh thành video", "ghép clip", "video có nhạc từ ảnh", "thêm giọng đọc cho ảnh".
 ---
 
 # Video từ ảnh (ImageFly)
@@ -35,6 +35,11 @@ python "$ROOT/tools/imagefly.py" new <slug> --images "<thư mục ảnh>" --aspe
 Lệnh xoay ảnh theo EXIF, giảm cỡ, in danh sách `i01...` (kích thước, dọc hay ngang). Thứ tự mặc định theo tên file; `--order date` theo ngày chụp. **Mở xem ảnh** (Read từng ảnh hoặc ghép tờ ảnh bằng ffmpeg) để hiểu nội dung, rồi chỉnh `videos/<slug>/images.json` khi cần:
 
 - `"skip": true` bỏ ảnh; đổi thứ tự bằng cách sắp lại các phần tử.
+- **Clip video:** thư viện có thể trộn ảnh và video (`.mp4 .mov .m4v .mkv .webm .avi .mts .3gp`). Khi nạp, clip được chuẩn hóa (H.264 30 fps, tối đa 1920 cạnh dài, tự xoay đúng chiều) và **bỏ hết tiếng gốc** (`-an`), để tiếng trong video chỉ còn giọng đọc và nhạc mới. Không bao giờ dùng tiếng của clip. Clip dùng chung `fit`, `focus`, `effect`, `transition`, `caption` như ảnh. Riêng clip:
+  - `"trim_start": giây`: điểm bắt đầu lấy trong clip.
+  - `"len": giây`: số giây dùng (slideshow mặc định `clip_s` = 4 giây trong `brief.json`, tự cắt trùng nhịp nhạc). Chế độ có lời: clip phát suốt thời lượng của cảnh.
+  - Clip ngắn hơn cảnh thì giữ khung hình cuối đến hết cảnh (`plan` in lưu ý).
+  - Clip dọc trong video ngang (và ngược lại) tự đặt giữa trên nền mờ, như ảnh. `sweep` dùng được cho clip rộng trong khung dọc.
 - `"focus": [x, y]` (0 đến 1) điểm nhấn: zoom và cắt hướng về đó (ví dụ người đang hàn ở góc phải dưới: `[0.8, 0.7]`).
 - `"focus_to": [x]` (0 đến 1): điểm nhấn thứ hai. Khi ảnh rộng hơn khung nhiều (ảnh ngang trong khung dọc) và `fit` là `cover`, camera tự **quét ngang** (`sweep`) từ `focus` sang `focus_to`, ví dụ ảnh chụp đôi: quét từ mặt người này sang mặt người kia. Xem ảnh, đặt `focus` đúng vào mặt người (x tính theo chiều rộng ảnh gốc), rồi kiểm tra khung hình đầu, giữa, cuối của từng cảnh trước khi giao.
 - `"fit": "cover" | "contain"` cho riêng ảnh này (ghi đè `fit` trong brief). Muốn ảnh ngang phủ kín khung dọc: đặt `fit: "cover"` trong `brief.json`; mặc định `auto` đặt ảnh giữa trên nền mờ để không cắt mất người.
