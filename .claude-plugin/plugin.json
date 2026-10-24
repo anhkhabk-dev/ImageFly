@@ -1,6 +1,6 @@
 {
   "name": "imagefly",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Làm video từ ảnh có sẵn bằng Claude Code: slideshow có nhạc và hiệu ứng, hoặc có lời đọc tiếng Việt (VieNeu). Khung 9:16 và 16:9, hiệu ứng quét máy quay, chuyển cảnh, phụ đề, trộn âm -14 LUFS, render bằng HyperFrames.",
   "author": { "name": "Nguyễn Anh Kha" },
   "license": "MIT",

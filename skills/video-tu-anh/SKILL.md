@@ -19,10 +19,12 @@ Lệnh tự dùng môi trường Python của ImageFly (`~/.imagefly/venv`, ho�
 |---|---|
 | Thư mục ảnh | bắt buộc |
 | Chế độ: `slideshow` (chỉ ảnh, nhạc, hiệu ứng) hay `voiceover` (có lời đọc) | slideshow |
-| Khung hình `9:16` hay `16:9` | 9:16 |
+| Khung hình `9:16` hay `16:9` | 9:16, và khung 9:16 mặc định **phủ kín** (`fit: cover`) |
 | Tiêu đề hiện đầu video | không |
 | Nhạc: file của người dùng, hoặc `synth:calm|inspiring|upbeat|tech`, hoặc `none` | synth:inspiring |
 | Màu hình `look`: natural, warm, cool, cinematic, vivid, bw | natural |
+
+Khung hình: **không hỏi, không tự chọn 16:9.** Người dùng không nói gì về khung hình thì dùng 9:16 (phủ kín); chỉ dùng 16:9 khi họ nêu rõ (hoặc nói nơi đăng là YouTube, TV, trang web).
 
 Người dùng nói "tự làm hết" thì bỏ các cổng duyệt, chỉ báo cáo cuối.
 
@@ -42,7 +44,8 @@ Lệnh xoay ảnh theo EXIF, giảm cỡ, in danh sách `i01...` (kích thước
   - Clip dọc trong video ngang (và ngược lại) tự đặt giữa trên nền mờ, như ảnh. `sweep` dùng được cho clip rộng trong khung dọc.
 - `"focus": [x, y]` (0 đến 1) điểm nhấn: zoom và cắt hướng về đó (ví dụ người đang hàn ở góc phải dưới: `[0.8, 0.7]`).
 - `"focus_to": [x]` (0 đến 1): điểm nhấn thứ hai. Khi ảnh rộng hơn khung nhiều (ảnh ngang trong khung dọc) và `fit` là `cover`, camera tự **quét ngang** (`sweep`) từ `focus` sang `focus_to`, ví dụ ảnh chụp đôi: quét từ mặt người này sang mặt người kia. Xem ảnh, đặt `focus` đúng vào mặt người (x tính theo chiều rộng ảnh gốc), rồi kiểm tra khung hình đầu, giữa, cuối của từng cảnh trước khi giao.
-- `"fit": "cover" | "contain"` cho riêng ảnh này (ghi đè `fit` trong brief). Muốn ảnh ngang phủ kín khung dọc: đặt `fit: "cover"` trong `brief.json`; mặc định `auto` đặt ảnh giữa trên nền mờ để không cắt mất người.
+- **Khung 9:16 mặc định phủ kín** (`new` ghi `fit: cover` vào `brief.json`): ảnh ngang bị cắt còn khoảng 40% chiều rộng, nên **bắt buộc đặt `focus` (và `focus_to` cho ảnh quét) vào chủ thể của từng ảnh** rồi kiểm khung hình đầu, giữa, cuối. Người dùng muốn ảnh nguyên khổ giữa nền mờ thì đặt `fit: "auto"` trong `brief.json`. Khung 16:9 vẫn mặc định `auto`.
+- `"fit": "cover" | "contain"` cho riêng ảnh này (ghi đè `fit` trong brief). `fit` trong `brief.json`: `cover` (phủ kín, mặc định cho khung 9:16 do `new` ghi), `contain` (nguyên khổ giữa nền mờ), `auto` (tự chọn: phủ kín nếu tỉ lệ ảnh gần khung, ngược lại nguyên khổ trên nền mờ; mặc định cho khung 16:9). Clip video theo cùng quy tắc.
 - `"effect"`: `zoom-in`, `zoom-out`, `push-focus`, `pan-left`, `pan-right`, `pan-up`, `pan-down`, `drift`, `none`.
 - `"transition"`: `fade`, `slide`, `slideup`, `zoom`, `wipe`.
 - `"caption"`: chú thích ngắn hiện dưới ảnh (chế độ slideshow).
@@ -60,7 +63,7 @@ Có `title` trong `brief.json` thì tiêu đề **in hoa**, hiện to giữa khu
 
 Kết quả nằm ở `title_plan` trong `shots.json` (in ra khi chạy `plan`).
 
-Agent được quyền tự thiết kế: ghi `brief.json` các khóa `title_plan` (danh sách `{"t": giây, "pos": "top-left|top-right|bottom-left|bottom-right", "color": "#RRGGBB", "hop": "move|pop"}`), `title_colors` (bảng màu), `title_intro_s`, `title_hop_s`, `title_upper: false` (không in hoa). Chữ phải đọc được trên mọi ảnh: không đặt màu quá tối, giữ nền mờ phía sau (đã có sẵn khi ở góc).
+Agent được quyền tự thiết kế: ghi `brief.json` các khóa `title_plan` (danh sách `{"t": giây, "pos": "top-left|top-right|bottom-left|bottom-right", "color": "#RRGGBB", "hop": "move|pop"}`), `title_colors` (bảng màu), `title_intro_s`, `title_hop_s`, `title_upper: false` (không in hoa). `title_line2`: dòng nhỏ màu trắng dưới tiêu đề, hiện khi tiêu đề đã về góc (ví dụ số điện thoại, tên fanpage). Khung dọc dùng cỡ chữ tiêu đề nhỏ hơn để tiêu đề nằm trọn một dòng. Chữ phải đọc được trên mọi ảnh: không đặt màu quá tối, giữ nền mờ phía sau (đã có sẵn khi ở góc).
 
 ## Nhạc nền (brief.music)
 

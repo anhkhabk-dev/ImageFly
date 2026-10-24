@@ -22,7 +22,7 @@ Phát triển từ [MotionFly](https://github.com/andyluu98/MotionFly), thêm đ
 
 - **Thư viện ảnh và clip video:** trộn lẫn ảnh và video trong cùng thư mục. Clip được chuẩn hóa, cắt đoạn (`trim_start`, `len`), tự bỏ tiếng gốc để trộn giọng đọc và nhạc mới; dùng chung hiệu ứng, chuyển cảnh, tiêu đề với ảnh.
 - Nạp ảnh tự động: xoay theo EXIF, giảm cỡ, sắp theo tên hoặc ngày chụp; ảnh gốc không bị sửa.
-- Ảnh lệch tỉ lệ nhiều so với khung được đặt giữa trên nền mờ của chính nó; lệch ít thì phủ kín và quét máy quay.
+- **Mặc định khung 9:16, phủ kín** (không nói gì thì dùng 9:16; chọn 16:9 bằng `--aspect 16:9`). Ảnh ngang bị cắt hẹp nên camera quét ngang vào chủ thể (`focus`, `focus_to`). Muốn ảnh nguyên khổ giữa nền mờ: đặt `fit` là `"auto"` hoặc `"contain"` trong `brief.json`. Khung 16:9 mặc định `auto`: ảnh lệch ít thì phủ kín, lệch nhiều thì đặt giữa trên nền mờ.
 - 9 hiệu ứng máy quay: `zoom-in`, `zoom-out`, `push-focus`, `pan-left/right/up/down`, `drift`, `none`; điểm nhấn `focus` cho từng ảnh.
 - 5 kiểu chuyển cảnh: `fade`, `slide`, `slideup`, `zoom`, `wipe` (hoặc `mix` xoay vòng).
 - 6 tông màu: `natural`, `warm`, `cool`, `cinematic`, `vivid`, `bw`.

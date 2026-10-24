@@ -44,6 +44,7 @@ MAX_EDGE = 2560
 DEFAULT_BRIEF = {
     "title": "",
     "subtitle": "",
+    "title_line2": "",            # dòng nhỏ dưới tiêu đề khi đã về góc (ví dụ số điện thoại)
     "mode": "slideshow",          # slideshow | voiceover
     "aspect": "9:16",             # 9:16 | 16:9 | 1:1
     "look": "natural",            # natural | warm | cool | cinematic | vivid | bw
@@ -567,6 +568,8 @@ TITLE_HTML = r"""<!doctype html>
         #ttl-in { display: flex; flex-direction: column; justify-content: center; }
         #ttl-text { font-size: __BIG__px; font-weight: 800; letter-spacing: 0.06em; line-height: 1.1; color: __C0__;
           text-shadow: 0 3px 22px rgba(0,0,0,0.75), 0 0 30px __GLOW__; }
+        #ttl-l2 { margin-top: 6px; font-size: __L2PX__px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+          color: #fff; opacity: 0; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
         #ttl-text .w { display: inline-block; white-space: nowrap; margin-right: 0.3em; }
         #ttl-text .ch { display: inline-block; }
         #ttl-sub { position: absolute; left: 42px; top: 100%; margin-top: 6px; width: max-content; max-width: 100%;
@@ -575,7 +578,7 @@ TITLE_HTML = r"""<!doctype html>
       </style>
 
       <div id="_title-root" data-composition-id="_title" data-width="__W__" data-height="__H__">
-        <div id="ttl" data-layout-allow-overflow><div id="ttl-bar"></div><div id="ttl-in" data-layout-allow-overflow><div id="ttl-text" data-layout-allow-overflow>__TEXT__</div></div>__SUB__</div>
+        <div id="ttl" data-layout-allow-overflow><div id="ttl-bar"></div><div id="ttl-in" data-layout-allow-overflow><div id="ttl-text" data-layout-allow-overflow>__TEXT__</div>__L2__</div>__SUB__</div>
       </div>
 
       <script>
@@ -594,6 +597,7 @@ TITLE_HTML = r"""<!doctype html>
               backgroundColor: "rgba(8,10,14,0.7)", duration: 0.9, ease: "power3.inOut" }, at);
             tl.to(txt, { color: seg.color, duration: 0.9 }, at);
             tl.to(bar, { backgroundColor: seg.color, duration: 0.9 }, at);
+            if (i === 0 && cfg.hasL2) tl.to("#ttl-l2", { opacity: 1, duration: 0.7 }, at + 0.5);
             if (i === 0 && cfg.hasSub) tl.to(sub, { opacity: 0, duration: 0.5 }, at);
             if (seg.hop === "pop") {
               tl.fromTo(inn, { scale: 1.2 }, { scale: 1, duration: 0.6, ease: "back.out(2.4)" }, at + 0.75);
@@ -625,13 +629,14 @@ def write_title(project: Path, brief: dict, sh: dict) -> None:
                     + "".join(f'<span class="ch" data-layout-allow-overflow>{esc(c)}</span>' for c in w) + "</span>"
                     for w in text.split())
     sub = f'<div id="ttl-sub">{esc(brief["subtitle"])}</div>' if brief["subtitle"] else ""
+    l2 = f'<div id="ttl-l2">{esc(brief["title_line2"])}</div>' if brief["title_line2"] else ""
     c0 = segs[0]["color"]
-    big, small = (76, 40) if portrait else (104, 38)
+    big, small = (58, 36) if portrait else (104, 38)   # dọc: chữ vừa để tiêu đề không xuống dòng
     s = round(small / big, 3)
-    cfg = {"segs": segs, "total": sh["total"], "hasSub": bool(sub), "W": W, "H": H, "s": s,
+    cfg = {"segs": segs, "total": sh["total"], "hasSub": bool(sub), "hasL2": bool(l2), "W": W, "H": H, "s": s,
            "pos": {c: corner_css(c, W, H, caps_on, s) for c in CORNERS}}
     html = (TITLE_HTML.replace("__CFG__", json.dumps(cfg, ensure_ascii=False)).replace("__TEXT__", words)
-            .replace("__SUB__", sub).replace("__C0__", c0).replace("__GLOW__", c0 + "99")
+            .replace("__SUB__", sub).replace("__L2__", l2).replace("__L2PX__", str(round(big * 0.5))).replace("__C0__", c0).replace("__GLOW__", c0 + "99")
             .replace("__BIG__", str(big)).replace("__W__", str(W)).replace("__H__", str(H)))
     f.write_text(html, encoding="utf-8")
 
@@ -857,6 +862,8 @@ def new(slug: str, images: Path, args) -> Path:
     project.mkdir(parents=True, exist_ok=True)
     brief = {**DEFAULT_BRIEF, "title": args.title or "", "mode": args.mode, "aspect": args.aspect,
              "look": args.look, "music": args.music}
+    if args.aspect == "9:16":
+        brief["fit"] = "cover"    # khung dọc: mặc định phủ kín, không để dải nền mờ (đặt "auto" nếu muốn ảnh nguyên khổ)
     jsave(project / "brief.json", brief)
     imgs = ingest(project, images, args.order)
     n_clip = sum(1 for im in imgs if im.get("type") == "video")
