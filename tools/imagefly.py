@@ -44,6 +44,8 @@ MAX_EDGE = 2560
 DEFAULT_BRIEF = {
     "title": "",
     "subtitle": "",
+    "no_lite": False,             # true: chỉ xuất bản chính, không sinh bản -nhe.mp4
+    "title_corner_text": "",     # chữ hiện ở góc sau phần mở đầu (bỏ trống: giữ tiêu đề chính)
     "title_line2": "",            # dòng nhỏ dưới tiêu đề khi đã về góc (ví dụ số điện thoại)
     "mode": "slideshow",          # slideshow | voiceover
     "aspect": "9:16",             # 9:16 | 16:9 | 1:1
@@ -54,7 +56,7 @@ DEFAULT_BRIEF = {
     #       danh sách file (nối, mờ chồng 2 giây) | none
     "music": "synth:inspiring",
     "music_start_s": 0,           # bắt đầu lấy nhạc từ giây thứ mấy của file (chọn đoạn hay nhất)
-    "music_db": -14,              # nhạc so với giọng khi giọng đang đọc (dB); nhạc tự hạ xuống mức này
+    "music_db": -11,              # nhạc so với giọng khi giọng đang đọc (dB); nhạc tự hạ xuống mức này
     "duck_db": 6,                 # nhạc to thêm bao nhiêu dB lúc giọng nghỉ (nhạc hồi lại giữa các câu)
     "solo_music_gain_db": 0,      # chỉnh thêm cho slideshow không lời
     # hiệu ứng âm thanh ở chỗ chuyển cảnh và tiêu đề đổi góc. "auto": bật, trừ khi người dùng đưa file nhạc
@@ -501,8 +503,7 @@ SHOT_HTML = r"""<!doctype html>
             zoom: () => tl.fromTo(stage, { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: T, ease: "power2.out" }, 0),
             wipe: () => tl.fromTo(stage, { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: T, ease: "power2.inOut" }, 0),
           };
-          (tin[cfg.tin] || tin.fade)();
-          if (cfg.first) tl.fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power1.out" }, 0);
+          if (!cfg.first) (tin[cfg.tin] || tin.fade)();   // khung đầu hiện ngay từ giây 0, không mờ từ nền đen (ảnh đại diện)
           if (cfg.last) tl.to(stage, { opacity: 0, duration: 0.9, ease: "power1.in" }, Math.max(0, D - 0.9));
           if (cfg.caption) {
             const c = "#" + id + "-cap";
@@ -562,23 +563,25 @@ TITLE_HTML = r"""<!doctype html>
         @font-face { font-family: "Be Vietnam Pro"; src: url("fonts/BeVietnamPro-Medium.ttf"); font-weight: 500; }
         @font-face { font-family: "Be Vietnam Pro"; src: url("fonts/BeVietnamPro-ExtraBold.ttf"); font-weight: 800; }
         #_title-root { position: absolute; inset: 0; overflow: hidden; font-family: "Be Vietnam Pro", sans-serif; }
-        #ttl { position: absolute; left: 0; top: 0; display: flex; gap: 18px; align-items: stretch; max-width: 88%;
+        #ttl, #ttl2 { position: absolute; left: 0; top: 0; display: flex; gap: 18px; align-items: stretch; max-width: 88%;
           padding: 12px 22px 12px 16px; border-radius: 14px; background: rgba(0,0,0,0); transform-origin: 0 0; }
-        #ttl-bar { width: 8px; border-radius: 4px; background: __C0__; flex: none; }
-        #ttl-in { display: flex; flex-direction: column; justify-content: center; }
-        #ttl-text { font-size: __BIG__px; font-weight: 800; letter-spacing: 0.06em; line-height: 1.1; color: __C0__;
+        #ttl2 { opacity: 0; }
+        #ttl-bar, #ttl2-bar { width: 8px; border-radius: 4px; background: __C0__; flex: none; }
+        #ttl-in, #ttl2-in { display: flex; flex-direction: column; justify-content: center; }
+        #ttl-text, #ttl2-text { font-size: __BIG__px; font-weight: 800; letter-spacing: 0.06em; line-height: 1.1; color: __C0__;
           text-shadow: 0 3px 22px rgba(0,0,0,0.75), 0 0 30px __GLOW__; }
         #ttl-l2 { margin-top: 6px; font-size: __L2PX__px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
           color: #fff; opacity: 0; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
         #ttl-text .w { display: inline-block; white-space: nowrap; margin-right: 0.3em; }
         #ttl-text .ch { display: inline-block; }
         #ttl-sub { position: absolute; left: 42px; top: 100%; margin-top: 6px; width: max-content; max-width: 100%;
-          font-size: 40px; font-weight: 500; color: #fff; letter-spacing: 0.04em;
+          font-size: 45px; font-weight: 500; color: #fff; letter-spacing: 0.04em;
           text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
       </style>
 
       <div id="_title-root" data-composition-id="_title" data-width="__W__" data-height="__H__">
         <div id="ttl" data-layout-allow-overflow><div id="ttl-bar"></div><div id="ttl-in" data-layout-allow-overflow><div id="ttl-text" data-layout-allow-overflow>__TEXT__</div>__L2__</div>__SUB__</div>
+        __TTL2__
       </div>
 
       <script>
@@ -606,6 +609,23 @@ TITLE_HTML = r"""<!doctype html>
             }
           });
           tl.to(el, { opacity: 0, duration: 0.8, ease: "power1.in" }, Math.max(0, cfg.total - 1.0));
+          if (cfg.t2) {
+            const e2 = "#ttl2", p0 = cfg.pos[cfg.segs[0].pos];
+            tl.set(e2, { x: p0.x, y: p0.y, xPercent: p0.xPercent, yPercent: p0.yPercent, scale: cfg.s, opacity: 0, backgroundColor: "rgba(8,10,14,0.7)" }, 0);
+            tl.set("#ttl2-text", { color: cfg.segs[0].color }, 0);
+            tl.set("#ttl2-bar", { backgroundColor: cfg.segs[0].color }, 0);
+            const t0 = cfg.segs[0].t + 0.5;
+            tl.to(el, { opacity: 0, duration: 0.4 }, t0);
+            tl.to(e2, { opacity: 1, duration: 0.4 }, t0);
+            cfg.segs.forEach((seg, i) => {
+              if (i === 0) return;
+              const p = cfg.pos[seg.pos];
+              tl.to(e2, { x: p.x, y: p.y, xPercent: p.xPercent, yPercent: p.yPercent, duration: 0.9, ease: "power3.inOut" }, seg.t);
+              tl.to("#ttl2-text", { color: seg.color, duration: 0.9 }, seg.t);
+              tl.to("#ttl2-bar", { backgroundColor: seg.color, duration: 0.9 }, seg.t);
+            });
+            tl.to(e2, { opacity: 0, duration: 0.8, ease: "power1.in" }, Math.max(0, cfg.total - 1.0));
+          }
           window.__timelines["_title"] = tl;
         })();
       </script>
@@ -630,13 +650,18 @@ def write_title(project: Path, brief: dict, sh: dict) -> None:
                     for w in text.split())
     sub = f'<div id="ttl-sub">{esc(brief["subtitle"])}</div>' if brief["subtitle"] else ""
     l2 = f'<div id="ttl-l2">{esc(brief["title_line2"])}</div>' if brief["title_line2"] else ""
+    t2 = ""
+    if brief["title_corner_text"]:
+        ct = brief["title_corner_text"].upper() if brief["title_upper"] else brief["title_corner_text"]
+        t2 = ('<div id="ttl2" data-layout-allow-overflow><div id="ttl2-bar"></div><div id="ttl2-in" data-layout-allow-overflow>'
+              f'<div id="ttl2-text" data-layout-allow-overflow style="white-space:nowrap">{esc(ct)}</div></div></div>')
     c0 = segs[0]["color"]
     big, small = (58, 36) if portrait else (104, 38)   # dọc: chữ vừa để tiêu đề không xuống dòng
     s = round(small / big, 3)
-    cfg = {"segs": segs, "total": sh["total"], "hasSub": bool(sub), "hasL2": bool(l2), "W": W, "H": H, "s": s,
+    cfg = {"segs": segs, "total": sh["total"], "hasSub": bool(sub), "hasL2": bool(l2), "t2": bool(brief["title_corner_text"]), "W": W, "H": H, "s": s,
            "pos": {c: corner_css(c, W, H, caps_on, s) for c in CORNERS}}
     html = (TITLE_HTML.replace("__CFG__", json.dumps(cfg, ensure_ascii=False)).replace("__TEXT__", words)
-            .replace("__SUB__", sub).replace("__L2__", l2).replace("__L2PX__", str(round(big * 0.5))).replace("__C0__", c0).replace("__GLOW__", c0 + "99")
+            .replace("__SUB__", sub).replace("__TTL2__", t2).replace("__L2__", l2).replace("__L2PX__", str(round(big * 0.5))).replace("__C0__", c0).replace("__GLOW__", c0 + "99")
             .replace("__BIG__", str(big)).replace("__W__", str(W)).replace("__H__", str(H)))
     f.write_text(html, encoding="utf-8")
 

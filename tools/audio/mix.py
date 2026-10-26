@@ -249,7 +249,12 @@ def final(project: Path, video: Path, name: str) -> None:
         if srt.exists():
             print("Lưu ý: không nhúng được phụ đề mềm (ffmpeg thiếu srt); phude.srt giao kèm.")
     print(f"FINAL {out} {out.stat().st_size / 1e6:.1f} MB")
-    if out.stat().st_size > LITE_BYTES:
+    no_lite = False
+    try:
+        no_lite = bool(json.loads((Path(project) / "brief.json").read_text(encoding="utf-8")).get("no_lite"))
+    except Exception:
+        pass
+    if out.stat().st_size > LITE_BYTES and not no_lite:
         dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
                                     str(out)], capture_output=True, text=True).stdout.strip() or 60)
         kbps = max(300, int(LITE_BYTES * 8 / dur / 1000) - 220)

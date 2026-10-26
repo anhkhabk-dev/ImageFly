@@ -63,7 +63,9 @@ Có `title` trong `brief.json` thì tiêu đề **in hoa**, hiện to giữa khu
 
 Kết quả nằm ở `title_plan` trong `shots.json` (in ra khi chạy `plan`).
 
-Agent được quyền tự thiết kế: ghi `brief.json` các khóa `title_plan` (danh sách `{"t": giây, "pos": "top-left|top-right|bottom-left|bottom-right", "color": "#RRGGBB", "hop": "move|pop"}`), `title_colors` (bảng màu), `title_intro_s`, `title_hop_s`, `title_upper: false` (không in hoa). `title_line2`: dòng nhỏ màu trắng dưới tiêu đề, hiện khi tiêu đề đã về góc (ví dụ số điện thoại, tên fanpage). Khung dọc dùng cỡ chữ tiêu đề nhỏ hơn để tiêu đề nằm trọn một dòng. Chữ phải đọc được trên mọi ảnh: không đặt màu quá tối, giữ nền mờ phía sau (đã có sẵn khi ở góc).
+Agent được quyền tự thiết kế: ghi `brief.json` các khóa `title_plan` (danh sách `{"t": giây, "pos": "top-left|top-right|bottom-left|bottom-right", "color": "#RRGGBB", "hop": "move|pop"}`), `title_colors` (bảng màu), `title_intro_s`, `title_hop_s`, `title_upper: false` (không in hoa). `title_corner_text`: chữ riêng hiện ở góc sau phần mở đầu (ví dụ tiêu đề lúc mở là "ĐẨY NHANH TIẾN ĐỘ" + `subtitle` cỡ 45, về góc đổi thành "SIÊU DỰ ÁN LẤN BIỂN CẦN GIỜ"); bỏ trống thì góc giữ tiêu đề chính. `no_lite: true`: chỉ xuất bản chính, không sinh `-nhe.mp4`. `title_line2`: dòng nhỏ màu trắng dưới tiêu đề, hiện khi tiêu đề đã về góc (ví dụ số điện thoại, tên fanpage). Khung dọc dùng cỡ chữ tiêu đề nhỏ hơn để tiêu đề nằm trọn một dòng. Chữ phải đọc được trên mọi ảnh: không đặt màu quá tối, giữ nền mờ phía sau (đã có sẵn khi ở góc).
+
+Khung hình đầu tiên (giây 0) hiện ngay ảnh đầu, không mờ từ nền đen, nên ảnh đại diện của file MP4 không bị đen: **chọn ảnh đẹp nhất làm ảnh đầu tiên** (sắp lại `images.json`). Nhạc nền mặc định `music_db: -11` (nhạc so với giọng khi giọng đọc), mức đã chốt là hợp lý.
 
 ## Nhạc nền (brief.music)
 
