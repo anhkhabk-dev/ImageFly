@@ -14,6 +14,8 @@ python tools/imagefly.py new <slug> --images "<thư mục ảnh>" --aspect 9:16 
 python tools/imagefly.py build videos/<slug> --name <ten-file>
 ```
 
+MV ca nhạc (có file mp3): `lyrics` nhận lời, viết `mv.json` (mốc cắt ảnh theo câu hát), `mv`, rồi `build` (xem SKILL.md, Bước 3c).
+
 Chế độ có lời: viết `videos/<slug>/script.json` (xem SKILL.md) rồi chạy `build` (tự sinh giọng).
 
 Quy tắc: không bịa số liệu hay thông tin không có trong ảnh hoặc yêu cầu của người dùng; không xóa hay sửa ảnh gốc; không tải nhạc/ảnh từ web đóng gói vào repo; không `git push` khi người dùng chưa đồng ý.

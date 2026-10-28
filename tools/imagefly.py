@@ -12,6 +12,8 @@ Lệnh (chạy từ thư mục đang làm việc; dự án nằm ở videos/<slu
   mix <du-an>                     trộn âm -> mix.wav (-14 LUFS)
   render <du-an> [--name N]       kiểm tra, render, ghép âm -> renders/<N>.mp4
   build <du-an>                   chạy tất cả theo thứ tự (voice nếu cần) rồi render
+  lyrics <du-an> [--audio FILE]   MV: nhận lời bài hát (Whisper) -> lyrics.json
+  mv <du-an>                      MV: mv.json (mốc cắt theo lời) -> images.json, brief.json, rồi plan
   doctor                          kiểm tra máy
 
 Mọi quyết định (thứ tự ảnh, hiệu ứng, thời lượng, chú thích) nằm trong brief.json và
@@ -925,6 +927,10 @@ def main() -> None:
         r = sp.add_parser(c)
         r.add_argument("project")
         r.add_argument("--name")
+    ly = sp.add_parser("lyrics")
+    ly.add_argument("project")
+    ly.add_argument("--audio")
+    sp.add_parser("mv").add_argument("project")
     sp.add_parser("doctor")
     a = ap.parse_args()
     if a.cmd == "doctor":
@@ -933,6 +939,15 @@ def main() -> None:
         new(a.slug, Path(a.images).expanduser().resolve(), a)
         return
     project = Path(a.project).resolve()
+    if a.cmd in ("lyrics", "mv"):
+        sys.path.insert(0, str(TOOLS))
+        import mv as mvtool
+        if a.cmd == "lyrics":
+            mvtool.lyrics(project, a.audio)
+        else:
+            mvtool.apply(project)
+            plan(project)
+        return
     if a.cmd == "ingest":
         print(f"INGEST {len(ingest(project, Path(a.images).expanduser().resolve(), a.order))} ảnh")
     elif a.cmd == "voice":

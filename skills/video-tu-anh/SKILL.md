@@ -18,7 +18,7 @@ Lệnh tự dùng môi trường Python của ImageFly (`~/.imagefly/venv`, ho�
 | Cần biết | Mặc định |
 |---|---|
 | Thư mục ảnh | bắt buộc |
-| Chế độ: `slideshow` (chỉ ảnh, nhạc, hiệu ứng) hay `voiceover` (có lời đọc) | slideshow |
+| Chế độ: `slideshow` (chỉ ảnh, nhạc, hiệu ứng), `voiceover` (có lời đọc) hay MV ca nhạc (có file bài hát, Bước 3c) | slideshow |
 | Khung hình `9:16` hay `16:9` | 9:16, và khung 9:16 mặc định **phủ kín** (`fit: cover`) |
 | Tiêu đề hiện đầu video | không |
 | Nhạc: file của người dùng, hoặc `synth:calm|inspiring|upbeat|tech`, hoặc `none` | synth:inspiring |
@@ -115,6 +115,21 @@ python "$ROOT/tools/imagefly.py" build videos/<slug> --name <ten-file>
 2. Gửi người dùng bảng cảnh, lời đọc, ảnh gán; chờ duyệt (trừ khi "tự làm hết").
 3. `python "$ROOT/tools/imagefly.py" build videos/<slug> --name <ten-file>` (tự sinh giọng, chấm bằng Whisper, nhạc tự hạ khi có lời, phụ đề in lên hình và `phude.srt`).
 4. Đọc `voice.log`: câu `WEAK` thật thì viết lại câu (cần chủ ngữ tiếng Việt, tránh câu quá ngắn) hoặc thêm `pron`, rồi chạy lại; chỉ câu sửa được sinh lại.
+
+## Bước 3c. Chế độ MV ca nhạc (ảnh cắt theo lời bài hát)
+
+Dùng khi người dùng đưa **file bài hát (mp3) kèm ảnh** và muốn làm MV. Nhạc là file của họ nên chỉ dùng file đó (không nhạc tổng hợp, không sfx).
+
+1. `new <slug> --images "<thư mục ảnh>" --aspect 9:16 --title "<tên bài>" --look cinematic`, rồi đặt `brief.json` `music` là đường dẫn tuyệt đối file mp3.
+2. `python "$ROOT/tools/imagefly.py" lyrics videos/<slug>`: nhận lời bằng Whisper, ghi `lyrics.json` (mốc giây từng câu). Lời có thể sai chính tả, chỉ dùng để hiểu ý và tìm mốc câu; khoảng trống giữa các câu là đoạn nhạc không lời (intro, interlude, outro). Câu quảng cáo "subscribe…" là nhận nhầm, đã tự loại.
+3. **Xem từng ảnh** rồi ghép ảnh với ý của từng câu: cô độc, ký ức hạnh phúc, chia ly, hy vọng, kết. Quy tắc ghép:
+   - Cắt cảnh đúng ranh giới câu hát; điệp khúc vào bằng chuyển cảnh mạnh hơn (`slideup`, `zoom`), còn lại chủ yếu `fade`.
+   - Cận cảnh cảm xúc: `zoom-in` chậm. Cô độc, xa cách, bình minh: `zoom-out`. Đi, níu kéo: `pan-*`, `push-focus`.
+   - Ảnh ít hơn số cảnh thì dùng lại, nhưng cách nhau xa và luôn đi với đúng ý của câu; nói rõ với người dùng và đề nghị thêm ảnh.
+   - Đoạn không lời dùng ảnh ký ức hoặc ảnh nhạc cụ; cảnh cuối nên về lại ảnh mở đầu cho khép vòng.
+4. Viết `videos/<slug>/mv.json`: `{"lead": 0.3, "cuts": [{"end": 14.8, "img": "i10", "effect": "zoom-in", "transition": "fade"}, ...]}`. `end` là giây kết thúc cảnh trong bài; `lead` cho chuyển cảnh bắt đầu sớm một chút để hình đổi cùng lúc câu hát; cảnh cuối có `end` bằng độ dài bài trừ 1 giây (đuôi). Có thể thêm `focus`, `focus_to`, `fit` cho từng cảnh.
+5. `python "$ROOT/tools/imagefly.py" mv videos/<slug>`: ghi `images.json` (ảnh dùng lại được nhân bản id mới, `beats` là số giây của cảnh), `brief.json` (`shot_s: 1`, `shot_beats: 1`), sao lưu bản cũ vào `_backup/`, rồi chạy `plan`. Kiểm `total` bằng độ dài bài.
+6. `build videos/<slug> --name <ten-file>`; bản sửa đặt tên mới (`-v2`), không ghi đè bản cũ. Kiểm như Bước 4 và báo cho người dùng bảng ảnh-theo-lời.
 
 ## Bước 4. Kiểm và giao
 
